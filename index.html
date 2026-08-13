@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>QC Ops Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1F2937; --ink-soft:#4B5563; --line:#E5E7EB; --page:#F7F8FA; --card:#FFFFFF;
+    --blue:#2563EB; --blue-bg:#E8EFFD;
+    --purple:#7C3AED; --purple-bg:#F1EAFD;
+    --teal:#0891B2; --teal-bg:#E3F4F8;
+    --amber:#D97706; --amber-bg:#FCF1E1;
+    --red:#DC2626; --red-bg:#FCE9E9;
+    --green:#059669; --green-bg:#E4F5EF;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 24px 60px;}
+  .top{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
+  .top h1{font-size:26px;font-weight:600;margin:0;letter-spacing:-0.01em;}
+  .top .sub{color:var(--ink-soft);font-size:13px;}
+  .savebar{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+  .tabs{display:flex;gap:6px;margin:22px 0 20px;border-bottom:1px solid var(--line);}
+  .tab{padding:9px 4px;margin-right:20px;font-size:14px;font-weight:500;color:var(--ink-soft);cursor:pointer;border-bottom:2px solid transparent;user-select:none;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--ink);}
+  .panel{display:none;} .panel.active{display:block;}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .stat .label{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+  .stat .value{font-size:22px;font-weight:600;font-family:'Space Grotesk',sans-serif;}
+
+  .section-title{font-size:14px;font-weight:600;color:var(--ink);margin:26px 0 10px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+
+  .row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:13px;}
+  .row:last-child{border-bottom:none;}
+  .row:hover{background:#FAFAFB;}
+  .catpill{flex-shrink:0;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;}
+  .rowdate{width:78px;flex-shrink:0;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+  .rowtask{flex:1;min-width:0;}
+  .rowtask .t{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rowtask .m{color:var(--ink-soft);font-size:12px;margin-top:1px;}
+  .status{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;flex-shrink:0;}
+  .st-open{background:var(--blue-bg);color:var(--blue);}
+  .st-progress{background:var(--amber-bg);color:var(--amber);}
+  .st-scheduled{background:#EFEFF2;color:var(--ink-soft);}
+  .st-done{background:var(--green-bg);color:var(--green);}
+  .rowbtn{border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:12px;padding:4px 6px;border-radius:6px;}
+  .rowbtn:hover{background:var(--line);color:var(--ink);}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+  select,input[type=text],input[type=date]{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);}
+  .btn{font-family:inherit;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;}
+  .btn:hover{background:#F2F3F5;}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .btn.primary:hover{opacity:.9;}
+  .spacer{flex:1;}
+
+  .empty{padding:40px 20px;text-align:center;color:var(--ink-soft);font-size:13px;}
+
+  .modal-bg{position:absolute;inset:0;background:rgba(31,41,55,.4);display:flex;align-items:flex-start;justify-content:center;padding-top:60px;z-index:10;}
+  .modal{background:var(--card);border-radius:12px;padding:22px;width:420px;max-width:92vw;box-shadow:0 12px 32px rgba(0,0,0,.18);}
+  .modal h3{margin:0 0 16px;font-size:16px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;}
+  .field input,.field select,.field textarea{width:100%;}
+  textarea{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;resize:vertical;min-height:56px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+  .banner{font-size:12px;background:var(--blue-bg);color:var(--blue);border-radius:8px;padding:8px 12px;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+
+  <div class="top">
+    <div>
+      <h1>QC Ops Hub</h1>
+      <div class="sub">Shared with your team &middot; changes save automatically</div>
+    </div>
+    <div class="savebar"><span class="dot"></span><span id="saveStatus">Synced</span></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="dash">Dashboard</div>
+    <div class="tab" data-tab="cal">Master Calendar</div>
+    <div class="tab" data-tab="arc">Archive</div>
+  </div>
+
+  <div class="panel active" id="panel-dash">
+    <div class="stats" id="statGrid"></div>
+    <div class="section-title">Due this week</div>
+    <div class="card" id="dueList"></div>
+    <div class="section-title">Overdue</div>
+    <div class="card" id="overdueList"></div>
+  </div>
+
+  <div class="panel" id="panel-cal">
+    <div id="recurBanner"></div>
+    <div class="toolbar">
+      <select id="filterCat"><option value="">All categories</option></select>
+      <select id="filterStatus">
+        <option value="">All statuses</option>
+        <option>Open</option><option>In Progress</option><option>Scheduled</option>
+        <option>Completed</option><option>Closed</option>
+      </select>
+      <div class="spacer"></div>
+      <button class="btn primary" id="addTaskBtn">+ Add task</button>
+    </div>
+    <div class="card" id="calList"></div>
+  </div>
+
+  <div class="panel" id="panel-arc">
+    <div class="toolbar">
+      <input type="text" id="archSearch" placeholder="Search archive...">
+      <div class="spacer"></div>
+      <span class="sub" id="archCount" style="font-size:12px;color:var(--ink-soft);"></span>
+    </div>
+    <div class="card" id="archList"></div>
+  </div>
+
+  <div id="modalRoot"></div>
+</div>
+
+<script>
+const CATS = {
+  '🗓️ Admin Tasks':'purple', '📚 T&D':'teal', '💬 C&M':'amber', '❓ Clarifications':'blue',
+  '🚨 ES Tracker':'red', '🗂️ Projects':'purple'
+};
+function catColor(c){ return CATS[c] || 'blue'; }
+function statusClass(s){
+  if(['Completed','Closed','Resolved'].includes(s)) return 'st-done';
+  if(s==='In Progress') return 'st-progress';
+  if(s==='Scheduled') return 'st-scheduled';
+  return 'st-open';
+}
+function fmtDate(iso){
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function uid(){ return 't'+Math.random().toString(36).slice(2,10); }
+
+let tasks = [];
+let archive = [];
+let meta = { lastRecurCheck: null };
+
+async function loadAll(){
+  try{
+    const t = await window.storage.get('qc-tasks', true);
+    tasks = t ? JSON.parse(t.value) : [];
+  }catch(e){ tasks = []; }
+  try{
+    const a = await window.storage.get('qc-archive', true);
+    archive = a ? JSON.parse(a.value) : [];
+  }catch(e){ archive = []; }
+  try{
+    const m = await window.storage.get('qc-meta', true);
+    meta = m ? JSON.parse(m.value) : { lastRecurCheck: null };
+  }catch(e){ meta = { lastRecurCheck: null }; }
+}
+
+async function saveTasks(){
+  document.getElementById('saveStatus').textContent = 'Saving...';
+  try{ await window.storage.set('qc-tasks', JSON.stringify(tasks), true); }catch(e){}
+  document.getElementById('saveStatus').textContent = 'Synced';
+}
+async function saveArchive(){
+  try{ await window.storage.set('qc-archive', JSON.stringify(archive), true); }catch(e){}
+}
+async function saveMeta(){
+  try{ await window.storage.set('qc-meta', JSON.stringify(meta), true); }catch(e){}
+}
+
+function fridaysBetween(startISO, endISO){
+  const out = [];
+  let d = new Date(startISO+'T00:00:00');
+  while(d.getDay() !== 5){ d.setDate(d.getDate()+1); }
+  const end = new Date(endISO+'T00:00:00');
+  while(d <= end){
+    out.push(d.toISOString().slice(0,10));
+    d.setDate(d.getDate()+7);
+  }
+  return out;
+}
+function firstOfMonthsBetween(startISO, endISO){
+  const out = [];
+  let d = new Date(startISO+'T00:00:00');
+  d = new Date(d.getFullYear(), d.getMonth(), 1);
+  const end = new Date(endISO+'T00:00:00');
+  while(d <= end){
+    out.push(d.toISOString().slice(0,10));
+    d.setMonth(d.getMonth()+1);
+  }
+  return out;
+}
+
+async function runRecurringCatchUp(){
+  const today = todayISO();
+  const start = meta.lastRecurCheck || '2026-01-01';
+  if(start > today){ return 0; }
+  let added = 0;
+  for(const dISO of firstOfMonthsBetween(start, today)){
+    if(!tasks.some(x=>x.date===dISO && x.type==='Admin Task' && x.task==='Monthly Report')){
+      tasks.push({id:uid(), date:dISO, category:'🗓️ Admin Tasks', type:'Admin Task', task:'Monthly Report', employee:'', status:'Scheduled', priority:'', notes:''});
+      added++;
+    }
+  }
+  for(const dISO of fridaysBetween(start, today)){
+    if(!tasks.some(x=>x.date===dISO && x.type==='Calibration' && x.task==='Weekly Calibration')){
+      tasks.push({id:uid(), date:dISO, category:'📚 T&D', type:'Calibration', task:'Weekly Calibration', employee:'', status:'Scheduled', priority:'', notes:''});
+      added++;
+    }
+  }
+  meta.lastRecurCheck = today;
+  if(added>0){ await saveTasks(); }
+  await saveMeta();
+  return added;
+}
+
+function renderStats(){
+  const total = tasks.length;
+  const open = tasks.filter(t=>['Open','In Progress','Scheduled'].includes(t.status)).length;
+  const done = tasks.filter(t=>['Completed','Closed','Resolved'].includes(t.status)).length;
+  const today = todayISO();
+  const overdue = tasks.filter(t=>t.date < today && !['Completed','Closed','Resolved'].includes(t.status)).length;
+  const in7 = new Date(); in7.setDate(in7.getDate()+7);
+  const in7ISO = in7.toISOString().slice(0,10);
+  const dueSoon = tasks.filter(t=>t.date>=today && t.date<=in7ISO && !['Completed','Closed','Resolved'].includes(t.status)).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  const stats = [
+    ['Total tasks', total], ['Open', open], ['Completed', done],
+    ['Overdue', overdue], ['Due this week', dueSoon], ['Completion', pct+'%']
+  ];
+  document.getElementById('statGrid').innerHTML = stats.map(([l,v])=>
+    `<div class="stat"><div class="label">${l}</div><div class="value">${v}</div></div>`).join('');
+
+  const dueList = tasks.filter(t=>t.date>=today && t.date<=in7ISO && !['Completed','Closed','Resolved'].includes(t.status))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  const overdueList = tasks.filter(t=>t.date<today && !['Completed','Closed','Resolved'].includes(t.status))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('dueList').innerHTML = dueList.length ? dueList.map(taskRowHtml).join('') : '<div class="empty">Nothing due this week.</div>';
+  document.getElementById('overdueList').innerHTML = overdueList.length ? overdueList.map(taskRowHtml).join('') : '<div class="empty">Nothing overdue.</div>';
+}
+
+function taskRowHtml(t){
+  const color = catColor(t.category);
+  return `<div class="row">
+    <span class="catpill" style="background:var(--${color}-bg);color:var(--${color});">${t.category||'Uncategorized'}</span>
+    <span class="rowdate">${fmtDate(t.date)}</span>
+    <span class="rowtask"><div class="t">${escapeHtml(t.task||t.type||'Untitled')}</div><div class="m">${escapeHtml(t.employee||'')}${t.employee?' &middot; ':''}${escapeHtml(t.type||'')}</div></span>
+    <span class="status ${statusClass(t.status)}">${t.status||'Open'}</span>
+    <button class="rowbtn" onclick="editTask('${t.id}')">Edit</button>
+  </div>`;
+}
+function escapeHtml(s){ return (s+'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderCatFilter(){
+  const sel = document.getElementById('filterCat');
+  const cats = Array.from(new Set(tasks.map(t=>t.category).filter(Boolean)));
+  sel.innerHTML = '<option value="">All categories</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function renderCalendar(){
+  const catF = document.getElementById('filterCat').value;
+  const statF = document.getElementById('filterStatus').value;
+  let list = tasks.filter(t => (!catF || t.category===catF) && (!statF || t.status===statF));
+  list.sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('calList').innerHTML = list.length ? list.map(taskRowHtml).join('') : '<div class="empty">No tasks match. Add one to get started.</div>';
+}
+
+function renderArchive(){
+  const q = document.getElementById('archSearch').value.trim().toLowerCase();
+  let list = archive.filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+  list.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  document.getElementById('archCount').textContent = list.length + ' archived';
+  document.getElementById('archList').innerHTML = list.length ? list.map(t=>{
+    const color = catColor(t.category);
+    return `<div class="row">
+      <span class="catpill" style="background:var(--${color}-bg);color:var(--${color});">${t.category||''}</span>
+      <span class="rowdate">${fmtDate(t.date)}</span>
+      <span class="rowtask"><div class="t">${escapeHtml(t.task||t.type||'Untitled')}</div><div class="m">${escapeHtml(t.employee||'')}</div></span>
+      <span class="status st-done">${t.status||'Completed'}</span>
+    </div>`;
+  }).join('') : '<div class="empty">Nothing archived yet. Mark a task Completed or Closed to archive it.</div>';
+}
+
+async function archiveDoneTasks(){
+  const toArchive = tasks.filter(t=>['Completed','Closed','Resolved'].includes(t.status));
+  if(toArchive.length===0) return;
+  toArchive.forEach(t=>archive.push({...t, archivedOn: todayISO()}));
+  tasks = tasks.filter(t=>!['Completed','Closed','Resolved'].includes(t.status));
+  await saveTasks();
+  await saveArchive();
+}
+
+function openModal(existing){
+  const t = existing || {id:uid(), date:todayISO(), category:'🗓️ Admin Tasks', type:'', task:'', employee:'', status:'Open', priority:'', notes:''};
+  const isNew = !existing;
+  const catOptions = Object.keys(CATS).map(c=>`<option ${c===t.category?'selected':''}>${c}</option>`).join('');
+  document.getElementById('modalRoot').innerHTML = `
+    <div class="modal-bg" id="modalBg">
+      <div class="modal">
+        <h3>${isNew?'Add task':'Edit task'}</h3>
+        <div class="field"><label>Date</label><input type="date" id="f-date" value="${t.date}"></div>
+        <div class="field"><label>Category</label><select id="f-cat">${catOptions}</select></div>
+        <div class="field"><label>Type</label><input type="text" id="f-type" value="${escapeHtml(t.type)}" placeholder="e.g. Coaching, Huddle"></div>
+        <div class="field"><label>Task / topic</label><input type="text" id="f-task" value="${escapeHtml(t.task)}"></div>
+        <div class="field"><label>Employee</label><input type="text" id="f-emp" value="${escapeHtml(t.employee)}"></div>
+        <div class="field"><label>Status</label>
+          <select id="f-status">
+            ${['Open','In Progress','Scheduled','Completed','Closed'].map(s=>`<option ${s===t.status?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="f-notes">${escapeHtml(t.notes||'')}</textarea></div>
+        <div class="modal-actions">
+          ${isNew?'':'<button class="btn" id="deleteBtn" style="margin-right:auto;color:var(--red);">Delete</button>'}
+          <button class="btn" id="cancelBtn">Cancel</button>
+          <button class="btn primary" id="saveBtn">Save</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('cancelBtn').onclick = closeModal;
+  document.getElementById('modalBg').onclick = (e)=>{ if(e.target.id==='modalBg') closeModal(); };
+  if(!isNew){
+    document.getElementById('deleteBtn').onclick = async ()=>{
+      tasks = tasks.filter(x=>x.id!==t.id);
+      await saveTasks(); closeModal(); renderAll();
+    };
+  }
+  document.getElementById('saveBtn').onclick = async ()=>{
+    const updated = {
+      id:t.id,
+      date:document.getElementById('f-date').value || todayISO(),
+      category:document.getElementById('f-cat').value,
+      type:document.getElementById('f-type').value,
+      task:document.getElementById('f-task').value,
+      employee:document.getElementById('f-emp').value,
+      status:document.getElementById('f-status').value,
+      notes:document.getElementById('f-notes').value,
+      priority:t.priority||''
+    };
+    const idx = tasks.findIndex(x=>x.id===t.id);
+    if(idx>=0) tasks[idx]=updated; else tasks.push(updated);
+    await saveTasks();
+    await archiveDoneTasks();
+    closeModal();
+    renderAll();
+  };
+}
+function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
+function editTask(id){ openModal(tasks.find(t=>t.id===id)); }
+
+function renderAll(){
+  renderStats();
+  renderCatFilter();
+  renderCalendar();
+  renderArchive();
+}
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+  };
+});
+document.getElementById('addTaskBtn').onclick = ()=>openModal(null);
+document.getElementById('filterCat').onchange = renderCalendar;
+document.getElementById('filterStatus').onchange = renderCalendar;
+document.getElementById('archSearch').oninput = renderArchive;
+
+(async function init(){
+  await loadAll();
+  const added = await runRecurringCatchUp();
+  await archiveDoneTasks();
+  if(added>0){
+    document.getElementById('recurBanner').innerHTML = `<div class="banner">Added ${added} recurring task${added===1?'':'s'} (Monthly Report on the 1st, Calibration every Friday) to catch up through today.</div>`;
+  }
+  renderAll();
+})();
+</script>
+</body>
+</html>
