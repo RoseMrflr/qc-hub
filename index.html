@@ -2,125 +2,238 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>QC Ops Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QC Operations Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#1F2937; --ink-soft:#4B5563; --line:#E5E7EB; --page:#F7F8FA; --card:#FFFFFF;
+    --navy:#111C3B; --navy2:#1B2A52;
+    --ink:#1F2937; --ink-soft:#6B7280; --line:#E7E9EC; --page:#F7F8FA; --card:#FFFFFF;
     --blue:#2563EB; --blue-bg:#E8EFFD;
     --purple:#7C3AED; --purple-bg:#F1EAFD;
     --teal:#0891B2; --teal-bg:#E3F4F8;
     --amber:#D97706; --amber-bg:#FCF1E1;
     --red:#DC2626; --red-bg:#FCE9E9;
     --green:#059669; --green-bg:#E4F5EF;
+    --slate:#475569; --slate-bg:#EEF1F4;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--page);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
   h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
-  .wrap{max-width:1080px;margin:0 auto;padding:28px 24px 60px;}
-  .top{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
-  .top h1{font-size:26px;font-weight:600;margin:0;letter-spacing:-0.01em;}
-  .top .sub{color:var(--ink-soft);font-size:13px;}
+  .wrap{max-width:1280px;margin:0 auto;padding:20px 24px 60px;}
+
+  /* Slim light header */
+  .hdr{background:var(--card);border-bottom:1px solid var(--line);}
+  .hdr-inner{max-width:1280px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .hdr-left{display:flex;align-items:center;gap:11px;}
+  .hdr-icon{width:32px;height:32px;border-radius:9px;background:rgba(17,28,59,.07);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .hdr h1{margin:0;font-size:16.5px;font-weight:600;letter-spacing:.01em;color:var(--ink);}
+  .hdr .sub{font-size:10px;letter-spacing:.1em;color:var(--ink-soft);text-transform:uppercase;margin-top:1px;}
   .savebar{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
   .dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
-  .tabs{display:flex;gap:6px;margin:22px 0 20px;border-bottom:1px solid var(--line);}
-  .tab{padding:9px 4px;margin-right:20px;font-size:14px;font-weight:500;color:var(--ink-soft);cursor:pointer;border-bottom:2px solid transparent;user-select:none;}
-  .tab.active{color:var(--ink);border-bottom-color:var(--ink);}
+
+  .tabbar{background:#fff;border-bottom:1px solid var(--line);}
+  .tabbar-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;gap:0;}
+  .tab{padding:12px 4px;margin-right:24px;font-size:13px;font-weight:500;color:var(--ink-soft);cursor:pointer;border-bottom:2px solid transparent;user-select:none;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--navy);}
   .panel{display:none;} .panel.active{display:block;}
 
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;}
-  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
-  .stat .label{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
-  .stat .value{font-size:22px;font-weight:600;font-family:'Space Grotesk',sans-serif;}
+  /* Sidebar + main layout */
+  .layout{display:flex;gap:18px;align-items:flex-start;margin-top:18px;}
+  .sidebar{width:312px;flex-shrink:0;display:flex;flex-direction:column;gap:14px;}
+  .main-col{flex:1;min-width:0;}
+  @media (max-width:900px){ .layout{flex-direction:column;} .sidebar{width:100%;} }
 
-  .section-title{font-size:14px;font-weight:600;color:var(--ink);margin:26px 0 10px;}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;}
 
-  .row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:13px;}
-  .row:last-child{border-bottom:none;}
-  .row:hover{background:#FAFAFB;}
-  .catpill{flex-shrink:0;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;}
-  .rowdate{width:78px;flex-shrink:0;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
-  .rowtask{flex:1;min-width:0;}
-  .rowtask .t{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .rowtask .m{color:var(--ink-soft);font-size:12px;margin-top:1px;}
-  .status{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;flex-shrink:0;}
+  .stats-card{padding:14px;}
+  .stats-card .cardtitle{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin-bottom:10px;}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .stat-mini{background:var(--page);border-radius:8px;padding:9px 10px;}
+  .stat-mini .label{font-size:9px;text-transform:uppercase;letter-spacing:.02em;color:var(--ink-soft);margin-bottom:4px;}
+  .stat-mini .value{font-size:17px;font-weight:600;font-family:'Space Grotesk',sans-serif;color:var(--ink);}
+  .stat-mini.warn .value{color:var(--red);}
+
+  /* Light calendar */
+  .cal-card{overflow:hidden;}
+  .cal-nav-lite{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border-bottom:1px solid var(--line);}
+  .cal-nav-lite .label{font-size:12.5px;font-weight:600;color:var(--ink);}
+  .cal-nav-lite button{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:15px;padding:2px 7px;border-radius:5px;line-height:1;}
+  .cal-nav-lite button:hover{background:var(--page);color:var(--ink);}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:8px;gap:2px;}
+  .cal-dow{font-size:9px;color:var(--ink-soft);text-align:center;padding:4px 0 6px;font-weight:600;}
+  .cal-day{position:relative;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10.5px;color:var(--ink);cursor:default;}
+  .cal-day.out .num{color:#CBD0D6;}
+  .cal-day .num{width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+  .cal-day.today .num{background:var(--navy);color:#fff;font-weight:700;}
+  .cal-day.overdue-flag .num{box-shadow:inset 0 0 0 1.5px var(--red);}
+  .cal-dot{width:4px;height:4px;border-radius:50%;margin-top:1px;}
+
+  .panel-card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .panel-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 12px;}
+  .panel-card-head h3{margin:0 0 3px;font-size:15px;}
+  .panel-card-head p{margin:0;font-size:12px;color:var(--ink-soft);}
+
+  .toolbar2{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:0 18px 14px;}
+  .tlabel{font-size:11px;color:var(--ink-soft);}
+  .spacer{flex:1;}
+  select,input[type=text],input[type=date],input[type=url]{font-family:inherit;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);}
+  .btn{font-family:inherit;font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap;}
+  .btn:hover{background:var(--page);}
+  .btn.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .btn.primary:hover{opacity:.9;}
+  .btn.active{background:var(--red-bg);color:var(--red);border-color:var(--red-bg);}
+
+  /* Contained-scroll, fixed-layout table so nothing scrolls horizontally */
+  .tablewrap{max-height:min(620px, calc(100vh - 300px));overflow-y:auto;overflow-x:hidden;border-top:1px solid var(--line);}
+  .tbl{width:100%;border-collapse:collapse;font-size:12.3px;table-layout:fixed;}
+  .tbl th{position:sticky;top:0;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-soft);padding:8px 9px;border-bottom:1px solid var(--line);background:#FAFAFB;z-index:1;}
+  .tbl td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:top;border-left:3px solid transparent;overflow:hidden;}
+  .tbl td:first-child{border-left-width:3px;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tr.overdue td:first-child{border-left-color:var(--red);}
+  .tbl tr:hover{background:var(--page);}
+  .ellip{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .status{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;display:inline-block;}
   .st-open{background:var(--blue-bg);color:var(--blue);}
   .st-progress{background:var(--amber-bg);color:var(--amber);}
-  .st-scheduled{background:#EFEFF2;color:var(--ink-soft);}
+  .st-scheduled{background:var(--slate-bg);color:var(--slate);}
   .st-done{background:var(--green-bg);color:var(--green);}
   .rowbtn{border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:12px;padding:4px 6px;border-radius:6px;}
   .rowbtn:hover{background:var(--line);color:var(--ink);}
+  .linklet{color:var(--blue);text-decoration:none;}
 
-  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
-  select,input[type=text],input[type=date]{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);}
-  .btn{font-family:inherit;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;}
-  .btn:hover{background:#F2F3F5;}
-  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
-  .btn.primary:hover{opacity:.9;}
-  .spacer{flex:1;}
+  .empty{padding:36px 20px;text-align:center;color:var(--ink-soft);font-size:13px;}
 
-  .empty{padding:40px 20px;text-align:center;color:var(--ink-soft);font-size:13px;}
-
-  .modal-bg{position:absolute;inset:0;background:rgba(31,41,55,.4);display:flex;align-items:flex-start;justify-content:center;padding-top:60px;z-index:10;}
-  .modal{background:var(--card);border-radius:12px;padding:22px;width:420px;max-width:92vw;box-shadow:0 12px 32px rgba(0,0,0,.18);}
+  .modal-bg{position:fixed;inset:0;background:rgba(17,28,59,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:10;}
+  .modal{background:var(--card);border-radius:12px;padding:22px;width:560px;max-width:94vw;box-shadow:0 12px 32px rgba(0,0,0,.2);}
   .modal h3{margin:0 0 16px;font-size:16px;}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .field{margin-bottom:12px;}
-  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;}
+  .field.full{grid-column:1/-1;}
+  .field label{display:block;font-size:11.5px;color:var(--ink-soft);margin-bottom:4px;}
   .field input,.field select,.field textarea{width:100%;}
-  textarea{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;resize:vertical;min-height:56px;}
+  textarea{font-family:inherit;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;resize:vertical;min-height:48px;}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
   .banner{font-size:12px;background:var(--blue-bg);color:var(--blue);border-radius:8px;padding:8px 12px;margin-bottom:16px;}
+
+  .archtoolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
 </style>
 </head>
 <body>
-<div class="wrap" id="app">
 
-  <div class="top">
-    <div>
-      <h1>QC Ops Hub</h1>
-      <div class="sub">Shared with your team &middot; changes save automatically</div>
+<div class="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-left">
+      <div class="hdr-icon">&#127970;</div>
+      <div>
+        <h1>QC Operations Hub</h1>
+        <div class="sub">Quality Control Command Center</div>
+      </div>
     </div>
     <div class="savebar"><span class="dot"></span><span id="saveStatus">Synced</span></div>
   </div>
-
-  <div class="tabs">
-    <div class="tab active" data-tab="dash">Dashboard</div>
-    <div class="tab" data-tab="cal">Master Calendar</div>
+</div>
+<div class="tabbar">
+  <div class="tabbar-inner">
+    <div class="tab active" data-tab="tasks">Tasks</div>
     <div class="tab" data-tab="arc">Archive</div>
   </div>
+</div>
 
-  <div class="panel active" id="panel-dash">
-    <div class="stats" id="statGrid"></div>
-    <div class="section-title">Due this week</div>
-    <div class="card" id="dueList"></div>
-    <div class="section-title">Overdue</div>
-    <div class="card" id="overdueList"></div>
-  </div>
+<div class="wrap" id="app">
 
-  <div class="panel" id="panel-cal">
+  <div class="panel active" id="panel-tasks">
     <div id="recurBanner"></div>
-    <div class="toolbar">
-      <select id="filterCat"><option value="">All categories</option></select>
-      <select id="filterStatus">
-        <option value="">All statuses</option>
-        <option>Open</option><option>In Progress</option><option>Scheduled</option>
-        <option>Completed</option><option>Closed</option>
-      </select>
-      <div class="spacer"></div>
-      <button class="btn primary" id="addTaskBtn">+ Add task</button>
+
+    <div class="layout">
+      <div class="sidebar">
+        <div class="card stats-card">
+          <div class="cardtitle">Overview</div>
+          <div class="stats-grid" id="statGrid"></div>
+        </div>
+        <div class="card cal-card">
+          <div class="cal-nav-lite">
+            <button id="calPrev">&#8249;</button>
+            <span class="label" id="calLabel"></span>
+            <button id="calNext">&#8250;</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+      </div>
+
+      <div class="main-col">
+        <div class="panel-card">
+          <div class="panel-card-head">
+            <div>
+              <h3>Log Entries</h3>
+              <p>Add a new entry, or click any row below to edit it.</p>
+            </div>
+            <button class="btn primary" id="addTaskBtn">+ Add Entry</button>
+          </div>
+          <div class="toolbar2">
+            <select id="filterCat"><option value="">All categories</option></select>
+            <select id="filterStatus">
+              <option value="">All statuses</option>
+              <option>Open</option><option>In Progress</option><option>Scheduled</option>
+              <option>Completed</option><option>Closed</option>
+            </select>
+            <div class="spacer"></div>
+            <span class="tlabel">Sort by</span>
+            <select id="sortBy">
+              <option value="date">Date</option>
+              <option value="status">Status</option>
+              <option value="category">Category</option>
+            </select>
+            <button class="btn" id="overdueToggle">Show overdue only</button>
+            <button class="btn" id="refreshBtn">Refresh</button>
+          </div>
+          <div class="tablewrap">
+            <table class="tbl">
+              <colgroup>
+                <col style="width:6.5%"><col style="width:8%"><col style="width:13%">
+                <col style="width:8%"><col style="width:12%"><col style="width:9%">
+                <col style="width:13%"><col style="width:6.5%"><col style="width:8%">
+                <col style="width:6%"><col style="width:5%"><col style="width:5%">
+              </colgroup>
+              <thead><tr>
+                <th>Date</th><th>Type</th><th>Topic</th><th>Person</th><th>Details</th>
+                <th>Issues</th><th>Goals / Action items</th><th>Due</th><th>Status</th>
+                <th>Priority</th><th>Link</th><th></th>
+              </tr></thead>
+              <tbody id="entriesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="card" id="calList"></div>
   </div>
 
   <div class="panel" id="panel-arc">
-    <div class="toolbar">
+    <div class="archtoolbar">
       <input type="text" id="archSearch" placeholder="Search archive...">
       <div class="spacer"></div>
-      <span class="sub" id="archCount" style="font-size:12px;color:var(--ink-soft);"></span>
+      <span class="tlabel" id="archCount"></span>
     </div>
-    <div class="card" id="archList"></div>
+    <div class="panel-card">
+      <div class="tablewrap">
+        <table class="tbl">
+          <colgroup>
+            <col style="width:6%"><col style="width:7.5%"><col style="width:12%">
+            <col style="width:7.5%"><col style="width:11%"><col style="width:8.5%">
+            <col style="width:12%"><col style="width:6%"><col style="width:7.5%">
+            <col style="width:5.5%"><col style="width:4.5%"><col style="width:12%">
+          </colgroup>
+          <thead><tr>
+            <th>Date</th><th>Type</th><th>Topic</th><th>Person</th><th>Details</th>
+            <th>Issues</th><th>Goals / Action items</th><th>Due</th><th>Status</th>
+            <th>Priority</th><th>Link</th><th>Archived</th>
+          </tr></thead>
+          <tbody id="archBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div id="modalRoot"></div>
@@ -128,9 +241,10 @@
 
 <script>
 const CATS = {
-  '🗓️ Admin Tasks':'purple', '📚 T&D':'teal', '💬 C&M':'amber', '❓ Clarifications':'blue',
-  '🚨 ES Tracker':'red', '🗂️ Projects':'purple'
+  '💬 C&M':'blue', '🚨 ES Tracker':'red', '❓ Clarifications':'amber',
+  '🗂️ Projects':'purple', '📚 T&D':'teal', '🗓️ Admin Tasks':'slate'
 };
+const CAT_HEX = {blue:'#2563EB',red:'#DC2626',amber:'#D97706',purple:'#7C3AED',teal:'#0891B2',slate:'#475569'};
 function catColor(c){ return CATS[c] || 'blue'; }
 function statusClass(s){
   if(['Completed','Closed','Resolved'].includes(s)) return 'st-done';
@@ -139,52 +253,43 @@ function statusClass(s){
   return 'st-open';
 }
 function fmtDate(iso){
+  if(!iso) return '';
   const d = new Date(iso+'T00:00:00');
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
 }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function uid(){ return 't'+Math.random().toString(36).slice(2,10); }
+function effDate(t){ return t.dueDate || t.date; }
+function isDone(s){ return ['Completed','Closed','Resolved'].includes(s); }
+function escapeHtml(s){ return (s+'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 let tasks = [];
 let archive = [];
 let meta = { lastRecurCheck: null };
+let overdueOnly = false;
+const today0 = new Date();
+let calYear = today0.getFullYear();
+let calMonth = today0.getMonth();
 
 async function loadAll(){
-  try{
-    const t = await window.storage.get('qc-tasks', true);
-    tasks = t ? JSON.parse(t.value) : [];
-  }catch(e){ tasks = []; }
-  try{
-    const a = await window.storage.get('qc-archive', true);
-    archive = a ? JSON.parse(a.value) : [];
-  }catch(e){ archive = []; }
-  try{
-    const m = await window.storage.get('qc-meta', true);
-    meta = m ? JSON.parse(m.value) : { lastRecurCheck: null };
-  }catch(e){ meta = { lastRecurCheck: null }; }
+  try{ tasks = JSON.parse(localStorage.getItem('qc-tasks') || '[]'); }catch(e){ tasks = []; }
+  try{ archive = JSON.parse(localStorage.getItem('qc-archive') || '[]'); }catch(e){ archive = []; }
+  try{ meta = JSON.parse(localStorage.getItem('qc-meta') || 'null') || { lastRecurCheck: null }; }catch(e){ meta = { lastRecurCheck: null }; }
 }
-
 async function saveTasks(){
   document.getElementById('saveStatus').textContent = 'Saving...';
-  try{ await window.storage.set('qc-tasks', JSON.stringify(tasks), true); }catch(e){}
+  localStorage.setItem('qc-tasks', JSON.stringify(tasks));
   document.getElementById('saveStatus').textContent = 'Synced';
 }
-async function saveArchive(){
-  try{ await window.storage.set('qc-archive', JSON.stringify(archive), true); }catch(e){}
-}
-async function saveMeta(){
-  try{ await window.storage.set('qc-meta', JSON.stringify(meta), true); }catch(e){}
-}
+async function saveArchive(){ localStorage.setItem('qc-archive', JSON.stringify(archive)); }
+async function saveMeta(){ localStorage.setItem('qc-meta', JSON.stringify(meta)); }
 
 function fridaysBetween(startISO, endISO){
   const out = [];
   let d = new Date(startISO+'T00:00:00');
   while(d.getDay() !== 5){ d.setDate(d.getDate()+1); }
   const end = new Date(endISO+'T00:00:00');
-  while(d <= end){
-    out.push(d.toISOString().slice(0,10));
-    d.setDate(d.getDate()+7);
-  }
+  while(d <= end){ out.push(d.toISOString().slice(0,10)); d.setDate(d.getDate()+7); }
   return out;
 }
 function firstOfMonthsBetween(startISO, endISO){
@@ -192,10 +297,7 @@ function firstOfMonthsBetween(startISO, endISO){
   let d = new Date(startISO+'T00:00:00');
   d = new Date(d.getFullYear(), d.getMonth(), 1);
   const end = new Date(endISO+'T00:00:00');
-  while(d <= end){
-    out.push(d.toISOString().slice(0,10));
-    d.setMonth(d.getMonth()+1);
-  }
+  while(d <= end){ out.push(d.toISOString().slice(0,10)); d.setMonth(d.getMonth()+1); }
   return out;
 }
 
@@ -205,14 +307,14 @@ async function runRecurringCatchUp(){
   if(start > today){ return 0; }
   let added = 0;
   for(const dISO of firstOfMonthsBetween(start, today)){
-    if(!tasks.some(x=>x.date===dISO && x.type==='Admin Task' && x.task==='Monthly Report')){
-      tasks.push({id:uid(), date:dISO, category:'🗓️ Admin Tasks', type:'Admin Task', task:'Monthly Report', employee:'', status:'Scheduled', priority:'', notes:''});
+    if(!tasks.some(x=>x.date===dISO && x.type==='Admin Task' && x.topic==='Monthly Report')){
+      tasks.push({id:uid(), date:dISO, dueDate:dISO, category:'🗓️ Admin Tasks', type:'Admin Task', topic:'Monthly Report', person:'', details:'', goals:'', issues:'', commendable:'', actionItems:'', status:'Scheduled', priority:'', link:''});
       added++;
     }
   }
   for(const dISO of fridaysBetween(start, today)){
-    if(!tasks.some(x=>x.date===dISO && x.type==='Calibration' && x.task==='Weekly Calibration')){
-      tasks.push({id:uid(), date:dISO, category:'📚 T&D', type:'Calibration', task:'Weekly Calibration', employee:'', status:'Scheduled', priority:'', notes:''});
+    if(!tasks.some(x=>x.date===dISO && x.type==='Calibration' && x.topic==='Weekly Calibration')){
+      tasks.push({id:uid(), date:dISO, dueDate:dISO, category:'📚 T&D', type:'Calibration', topic:'Weekly Calibration', person:'', details:'', goals:'', issues:'', commendable:'', actionItems:'', status:'Scheduled', priority:'', link:''});
       added++;
     }
   }
@@ -225,52 +327,70 @@ async function runRecurringCatchUp(){
 function renderStats(){
   const total = tasks.length;
   const open = tasks.filter(t=>['Open','In Progress','Scheduled'].includes(t.status)).length;
-  const done = tasks.filter(t=>['Completed','Closed','Resolved'].includes(t.status)).length;
+  const done = tasks.filter(t=>isDone(t.status)).length;
   const today = todayISO();
-  const overdue = tasks.filter(t=>t.date < today && !['Completed','Closed','Resolved'].includes(t.status)).length;
+  const overdue = tasks.filter(t=>effDate(t) < today && !isDone(t.status)).length;
   const in7 = new Date(); in7.setDate(in7.getDate()+7);
   const in7ISO = in7.toISOString().slice(0,10);
-  const dueSoon = tasks.filter(t=>t.date>=today && t.date<=in7ISO && !['Completed','Closed','Resolved'].includes(t.status)).length;
-  const pct = total ? Math.round((done/total)*100) : 0;
+  const dueSoon = tasks.filter(t=>effDate(t)>=today && effDate(t)<=in7ISO && !isDone(t.status)).length;
+  const esAll = tasks.filter(t=>t.category==='🚨 ES Tracker');
+  const esOpen = esAll.filter(t=>!isDone(t.status)).length;
   const stats = [
-    ['Total tasks', total], ['Open', open], ['Completed', done],
-    ['Overdue', overdue], ['Due this week', dueSoon], ['Completion', pct+'%']
+    ['Total entries', total, false], ['Open / Pending', open, false], ['Completed', done, false],
+    ['Overdue', overdue, overdue>0], ['Due this week', dueSoon, false], ['ES Tracker open', esOpen+' / '+esAll.length, false]
   ];
-  document.getElementById('statGrid').innerHTML = stats.map(([l,v])=>
-    `<div class="stat"><div class="label">${l}</div><div class="value">${v}</div></div>`).join('');
-
-  const dueList = tasks.filter(t=>t.date>=today && t.date<=in7ISO && !['Completed','Closed','Resolved'].includes(t.status))
-    .sort((a,b)=>a.date.localeCompare(b.date));
-  const overdueList = tasks.filter(t=>t.date<today && !['Completed','Closed','Resolved'].includes(t.status))
-    .sort((a,b)=>a.date.localeCompare(b.date));
-  document.getElementById('dueList').innerHTML = dueList.length ? dueList.map(taskRowHtml).join('') : '<div class="empty">Nothing due this week.</div>';
-  document.getElementById('overdueList').innerHTML = overdueList.length ? overdueList.map(taskRowHtml).join('') : '<div class="empty">Nothing overdue.</div>';
+  document.getElementById('statGrid').innerHTML = stats.map(([l,v,warn])=>
+    `<div class="stat-mini${warn?' warn':''}"><div class="label">${l}</div><div class="value">${v}</div></div>`).join('');
 }
-
-function taskRowHtml(t){
-  const color = catColor(t.category);
-  return `<div class="row">
-    <span class="catpill" style="background:var(--${color}-bg);color:var(--${color});">${t.category||'Uncategorized'}</span>
-    <span class="rowdate">${fmtDate(t.date)}</span>
-    <span class="rowtask"><div class="t">${escapeHtml(t.task||t.type||'Untitled')}</div><div class="m">${escapeHtml(t.employee||'')}${t.employee?' &middot; ':''}${escapeHtml(t.type||'')}</div></span>
-    <span class="status ${statusClass(t.status)}">${t.status||'Open'}</span>
-    <button class="rowbtn" onclick="editTask('${t.id}')">Edit</button>
-  </div>`;
-}
-function escapeHtml(s){ return (s+'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function renderCatFilter(){
   const sel = document.getElementById('filterCat');
-  const cats = Array.from(new Set(tasks.map(t=>t.category).filter(Boolean)));
-  sel.innerHTML = '<option value="">All categories</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All categories</option>' + Object.keys(CATS).map(c=>`<option ${c===current?'selected':''}>${c}</option>`).join('');
 }
 
-function renderCalendar(){
+function entryRowHtml(t, opts){
+  opts = opts || {};
+  const today = todayISO();
+  const overdue = effDate(t) < today && !isDone(t.status);
+  const goalsAction = [t.goals, t.actionItems].filter(Boolean).join(' — ');
+  return `<tr class="${overdue && !opts.archived ? 'overdue' : ''}" ${opts.archived?'':`onclick="editTask('${t.id}')" style="cursor:pointer;"`}>
+    <td><span class="ellip">${fmtDate(t.date)}</span></td>
+    <td><span class="ellip" title="${escapeHtml(t.type||'')}">${escapeHtml(t.type||'')}</span></td>
+    <td><span class="ellip" title="${escapeHtml(t.topic||'')}">${escapeHtml(t.topic||'Untitled')}</span></td>
+    <td><span class="ellip" title="${escapeHtml(t.person||'')}">${escapeHtml(t.person||'')}</span></td>
+    <td><span class="ellip" title="${escapeHtml(t.details||'')}">${escapeHtml(t.details||'')}</span></td>
+    <td><span class="ellip" title="${escapeHtml(t.issues||'')}">${escapeHtml(t.issues||'')}</span></td>
+    <td><span class="ellip" title="${escapeHtml(goalsAction)}">${escapeHtml(goalsAction)}</span></td>
+    <td><span class="ellip">${fmtDate(t.dueDate)}</span></td>
+    <td><span class="status ${statusClass(t.status)}">${t.status||'Open'}</span></td>
+    <td><span class="ellip" title="${escapeHtml(t.priority||'')}">${escapeHtml(t.priority||'')}</span></td>
+    <td>${t.link?`<a class="linklet" href="${escapeHtml(t.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${escapeHtml(t.link)}">&#128279;</a>`:''}</td>
+    <td>${opts.archived ? (t.archivedOn?fmtDate(t.archivedOn):'') : `<button class="rowbtn" onclick="event.stopPropagation();editTask('${t.id}')">Edit</button>`}</td>
+  </tr>`;
+}
+
+function renderEntries(){
   const catF = document.getElementById('filterCat').value;
   const statF = document.getElementById('filterStatus').value;
+  const sortBy = document.getElementById('sortBy').value;
+  const today = todayISO();
   let list = tasks.filter(t => (!catF || t.category===catF) && (!statF || t.status===statF));
-  list.sort((a,b)=>a.date.localeCompare(b.date));
-  document.getElementById('calList').innerHTML = list.length ? list.map(taskRowHtml).join('') : '<div class="empty">No tasks match. Add one to get started.</div>';
+  if(overdueOnly){ list = list.filter(t => effDate(t) < today && !isDone(t.status)); }
+  list.sort((a,b)=>{
+    if(sortBy==='status') return (a.status||'').localeCompare(b.status||'');
+    if(sortBy==='category') return (a.category||'').localeCompare(b.category||'');
+    return effDate(a).localeCompare(effDate(b));
+  });
+  // pin overdue to top, like the source app
+  list.sort((a,b)=>{
+    const aOver = effDate(a)<today && !isDone(a.status) ? 0 : 1;
+    const bOver = effDate(b)<today && !isDone(b.status) ? 0 : 1;
+    return aOver-bOver;
+  });
+  document.getElementById('entriesBody').innerHTML = list.length
+    ? list.map(t=>entryRowHtml(t,{})).join('')
+    : '<tr><td colspan="12" class="empty">No entries match. Add one to get started.</td></tr>';
 }
 
 function renderArchive(){
@@ -278,45 +398,79 @@ function renderArchive(){
   let list = archive.filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
   list.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
   document.getElementById('archCount').textContent = list.length + ' archived';
-  document.getElementById('archList').innerHTML = list.length ? list.map(t=>{
-    const color = catColor(t.category);
-    return `<div class="row">
-      <span class="catpill" style="background:var(--${color}-bg);color:var(--${color});">${t.category||''}</span>
-      <span class="rowdate">${fmtDate(t.date)}</span>
-      <span class="rowtask"><div class="t">${escapeHtml(t.task||t.type||'Untitled')}</div><div class="m">${escapeHtml(t.employee||'')}</div></span>
-      <span class="status st-done">${t.status||'Completed'}</span>
+  document.getElementById('archBody').innerHTML = list.length
+    ? list.map(t=>entryRowHtml(t,{archived:true})).join('')
+    : '<tr><td colspan="12" class="empty">Nothing archived yet. Mark an entry Completed or Closed to archive it.</td></tr>';
+}
+
+function renderMiniCal(){
+  document.getElementById('calLabel').textContent = new Date(calYear,calMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const first = new Date(calYear,calMonth,1);
+  const start = new Date(first); start.setDate(start.getDate()-start.getDay());
+  const last = new Date(calYear,calMonth+1,0);
+  const end = new Date(last); end.setDate(end.getDate()+(6-end.getDay()));
+  const today = todayISO();
+  const dows=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  let d = new Date(start);
+  while(d<=end){
+    const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const inMonth = d.getMonth()===calMonth;
+    const isToday = iso===today;
+    const dayTasks = tasks.filter(t=>t.date===iso);
+    const overdueHere = dayTasks.some(t=>effDate(t)<today && !isDone(t.status));
+    const cats = Array.from(new Set(dayTasks.map(t=>t.category).filter(Boolean)));
+    const tip = dayTasks.length ? dayTasks.map(x=>`${x.category||''} ${x.topic||x.type||''}`.trim()).join('; ') : '';
+    html += `<div class="cal-day ${inMonth?'':'out'} ${isToday?'today':''} ${overdueHere?'overdue-flag':''}" ${tip?`title="${escapeHtml(tip)}"`:''}>
+      <span class="num">${d.getDate()}</span>
+      ${cats.length?`<span class="cal-dot" style="background:${CAT_HEX[catColor(cats[0])]}"></span>`:''}
     </div>`;
-  }).join('') : '<div class="empty">Nothing archived yet. Mark a task Completed or Closed to archive it.</div>';
+    d.setDate(d.getDate()+1);
+  }
+  document.getElementById('calGrid').innerHTML = html;
 }
 
 async function archiveDoneTasks(){
-  const toArchive = tasks.filter(t=>['Completed','Closed','Resolved'].includes(t.status));
+  const toArchive = tasks.filter(t=>isDone(t.status));
   if(toArchive.length===0) return;
   toArchive.forEach(t=>archive.push({...t, archivedOn: todayISO()}));
-  tasks = tasks.filter(t=>!['Completed','Closed','Resolved'].includes(t.status));
+  tasks = tasks.filter(t=>!isDone(t.status));
   await saveTasks();
   await saveArchive();
 }
 
 function openModal(existing){
-  const t = existing || {id:uid(), date:todayISO(), category:'🗓️ Admin Tasks', type:'', task:'', employee:'', status:'Open', priority:'', notes:''};
+  const t = existing || {id:uid(), date:todayISO(), dueDate:todayISO(), category:Object.keys(CATS)[0], type:'', topic:'', person:'', details:'', goals:'', issues:'', commendable:'', actionItems:'', status:'Open', priority:'Medium', link:''};
   const isNew = !existing;
   const catOptions = Object.keys(CATS).map(c=>`<option ${c===t.category?'selected':''}>${c}</option>`).join('');
   document.getElementById('modalRoot').innerHTML = `
     <div class="modal-bg" id="modalBg">
       <div class="modal">
-        <h3>${isNew?'Add task':'Edit task'}</h3>
-        <div class="field"><label>Date</label><input type="date" id="f-date" value="${t.date}"></div>
-        <div class="field"><label>Category</label><select id="f-cat">${catOptions}</select></div>
-        <div class="field"><label>Type</label><input type="text" id="f-type" value="${escapeHtml(t.type)}" placeholder="e.g. Coaching, Huddle"></div>
-        <div class="field"><label>Task / topic</label><input type="text" id="f-task" value="${escapeHtml(t.task)}"></div>
-        <div class="field"><label>Employee</label><input type="text" id="f-emp" value="${escapeHtml(t.employee)}"></div>
-        <div class="field"><label>Status</label>
-          <select id="f-status">
-            ${['Open','In Progress','Scheduled','Completed','Closed'].map(s=>`<option ${s===t.status?'selected':''}>${s}</option>`).join('')}
-          </select>
+        <h3>${isNew?'Add entry':'Edit entry'}</h3>
+        <div class="fgrid">
+          <div class="field"><label>Date</label><input type="date" id="f-date" value="${t.date}"></div>
+          <div class="field"><label>Due date</label><input type="date" id="f-due" value="${t.dueDate||''}"></div>
+          <div class="field"><label>Category</label><select id="f-cat">${catOptions}</select></div>
+          <div class="field"><label>Type</label><input type="text" id="f-type" value="${escapeHtml(t.type)}" placeholder="e.g. Coaching, Escalation"></div>
+          <div class="field full"><label>Topic / task</label><input type="text" id="f-topic" value="${escapeHtml(t.topic)}"></div>
+          <div class="field"><label>Person</label><input type="text" id="f-person" value="${escapeHtml(t.person)}"></div>
+          <div class="field"><label>Status</label>
+            <select id="f-status">
+              ${['Open','In Progress','Scheduled','Completed','Closed'].map(s=>`<option ${s===t.status?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field full"><label>Details</label><textarea id="f-details">${escapeHtml(t.details||'')}</textarea></div>
+          <div class="field"><label>Goals</label><textarea id="f-goals">${escapeHtml(t.goals||'')}</textarea></div>
+          <div class="field"><label>Issues</label><textarea id="f-issues">${escapeHtml(t.issues||'')}</textarea></div>
+          <div class="field"><label>Commendable</label><textarea id="f-commendable">${escapeHtml(t.commendable||'')}</textarea></div>
+          <div class="field"><label>Action items</label><textarea id="f-action">${escapeHtml(t.actionItems||'')}</textarea></div>
+          <div class="field"><label>Priority</label>
+            <select id="f-priority">
+              ${['Low','Medium','High'].map(p=>`<option ${p===t.priority?'selected':''}>${p}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><label>Link</label><input type="url" id="f-link" value="${escapeHtml(t.link||'')}" placeholder="https://..."></div>
         </div>
-        <div class="field"><label>Notes</label><textarea id="f-notes">${escapeHtml(t.notes||'')}</textarea></div>
         <div class="modal-actions">
           ${isNew?'':'<button class="btn" id="deleteBtn" style="margin-right:auto;color:var(--red);">Delete</button>'}
           <button class="btn" id="cancelBtn">Cancel</button>
@@ -336,13 +490,19 @@ function openModal(existing){
     const updated = {
       id:t.id,
       date:document.getElementById('f-date').value || todayISO(),
+      dueDate:document.getElementById('f-due').value || '',
       category:document.getElementById('f-cat').value,
       type:document.getElementById('f-type').value,
-      task:document.getElementById('f-task').value,
-      employee:document.getElementById('f-emp').value,
+      topic:document.getElementById('f-topic').value,
+      person:document.getElementById('f-person').value,
       status:document.getElementById('f-status').value,
-      notes:document.getElementById('f-notes').value,
-      priority:t.priority||''
+      details:document.getElementById('f-details').value,
+      goals:document.getElementById('f-goals').value,
+      issues:document.getElementById('f-issues').value,
+      commendable:document.getElementById('f-commendable').value,
+      actionItems:document.getElementById('f-action').value,
+      priority:document.getElementById('f-priority').value,
+      link:document.getElementById('f-link').value
     };
     const idx = tasks.findIndex(x=>x.id===t.id);
     if(idx>=0) tasks[idx]=updated; else tasks.push(updated);
@@ -358,8 +518,9 @@ function editTask(id){ openModal(tasks.find(t=>t.id===id)); }
 function renderAll(){
   renderStats();
   renderCatFilter();
-  renderCalendar();
+  renderEntries();
   renderArchive();
+  renderMiniCal();
 }
 
 document.querySelectorAll('.tab').forEach(tab=>{
@@ -371,16 +532,25 @@ document.querySelectorAll('.tab').forEach(tab=>{
   };
 });
 document.getElementById('addTaskBtn').onclick = ()=>openModal(null);
-document.getElementById('filterCat').onchange = renderCalendar;
-document.getElementById('filterStatus').onchange = renderCalendar;
+document.getElementById('filterCat').onchange = renderEntries;
+document.getElementById('filterStatus').onchange = renderEntries;
+document.getElementById('sortBy').onchange = renderEntries;
+document.getElementById('refreshBtn').onclick = renderAll;
+document.getElementById('overdueToggle').onclick = (e)=>{
+  overdueOnly = !overdueOnly;
+  e.target.classList.toggle('active', overdueOnly);
+  renderEntries();
+};
 document.getElementById('archSearch').oninput = renderArchive;
+document.getElementById('calPrev').onclick = ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderMiniCal(); };
+document.getElementById('calNext').onclick = ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderMiniCal(); };
 
 (async function init(){
   await loadAll();
   const added = await runRecurringCatchUp();
   await archiveDoneTasks();
   if(added>0){
-    document.getElementById('recurBanner').innerHTML = `<div class="banner">Added ${added} recurring task${added===1?'':'s'} (Monthly Report on the 1st, Calibration every Friday) to catch up through today.</div>`;
+    document.getElementById('recurBanner').innerHTML = `<div class="banner">Added ${added} recurring entr${added===1?'y':'ies'} (Monthly Report on the 1st, Calibration every Friday) to catch up through today.</div>`;
   }
   renderAll();
 })();
