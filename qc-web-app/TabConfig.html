@@ -1,0 +1,45 @@
+<section id="config" class="page">
+    <div class="card">
+      <h2>Dropdown Options</h2>
+      <p class="muted">One option per line. Click Save to update the lists used across the app.</p>
+      <div class="row">
+        <div class="field">
+          <label>Type</label>
+          <textarea id="cfg_type" rows="8"></textarea>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <textarea id="cfg_status" rows="8"></textarea>
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <textarea id="cfg_priority" rows="8"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Impact Level (ES Tracker)</label>
+          <textarea id="cfg_impact" rows="6"></textarea>
+        </div>
+        <div class="field">
+          <label>Error Class (ES Tracker)</label>
+          <textarea id="cfg_errorClass" rows="6"></textarea>
+        </div>
+      </div>
+      <button class="primary" onclick="saveConfigOptions()">Save Options</button>
+      <div id="cfgMsg" class="msg"></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0">Employee Roster</h2>
+        <button class="secondary" onclick="addRosterRow()">+ Add Employee</button>
+      </div>
+      <p class="muted">Name is the alias used everywhere else (Coaching entries, ES Tracker, etc). Position can differ by month — edit any month's cell directly.</p>
+      <div style="overflow-x:auto">
+        <table class="config-table" id="rosterTable"></table>
+      </div>
+      <button class="primary" style="margin-top:12px" onclick="saveRoster()">Save Roster</button>
+      <div id="rosterMsg" class="msg"></div>
+    </div>
+  </section>

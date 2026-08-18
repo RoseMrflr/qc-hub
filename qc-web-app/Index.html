@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+    <meta charset="utf-8">
+    <?!= include('Styles'); ?>
+    </head>
+    <body>
+    <?!= include('Header'); ?>
+    
+    <?!= include('Nav'); ?>
+    
+    <main>
+    
+      <!-- TASKS (dashboard + inline add entry) -->
+      <?!= include('TabTasks'); ?>
+      
+        <!-- ARCHIVE -->
+        <?!= include('TabArchive'); ?>
+        
+          <!-- ES TRACKER & DOC CREATOR -->
+          <?!= include('TabESTracker'); ?>
+          
+            <!-- EMPLOYEES -->
+            <?!= include('TabEmployees'); ?>
+            
+              <!-- CONFIG -->
+              <?!= include('TabConfig'); ?>
+              
+              </main>
+              
+              <!-- ADD / EDIT ENTRY MODAL -->
+              <?!= include('Modal'); ?>
+              
+              <?!= include('Scripts'); ?>
+              
+              </body>
+              </html>>

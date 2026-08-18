@@ -1,0 +1,61 @@
+<section id="employees" class="page">
+    <div id="employeeListView">
+      <div class="card">
+        <div class="toolbar">
+          <h2 style="margin:0">Employees</h2>
+          <button class="secondary" onclick="loadEmployeeList()">Refresh</button>
+        </div>
+        <p class="muted">Click a person to see their full history — coaching sessions, observations, and ES Tracker incidents — as a guide before your next 1:1. Positions shown are this month's; add/edit the roster in Config.</p>
+        <div class="employee-list" id="employeeListWrap"><span class="spinner">Loading…</span></div>
+      </div>
+    </div>
+
+    <div id="employeeDetailView" class="hidden">
+      <span class="back-link" onclick="showEmployeeList()">&larr; Back to all employees</span>
+      <div class="card" id="employeeDetailHeader"></div>
+
+      <div class="card">
+        <h2>Log Observation / Coaching Note for this person</h2>
+        <form id="obsForm" onsubmit="submitObservation(event)">
+          <input type="hidden" id="obs_Person">
+          <div class="row">
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="obs_Date" required>
+            </div>
+            <div class="field">
+              <label>Type</label>
+              <select id="obs_Type"></select>
+            </div>
+            <div class="field" style="flex:2">
+              <label>Topic</label>
+              <input type="text" id="obs_Topic" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field" style="flex:2">
+              <label>Observation / Error / Notes</label>
+              <textarea id="obs_Details"></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Status</label>
+              <select id="obs_Status"></select>
+            </div>
+          </div>
+          <button type="submit" class="primary green">Save Note</button>
+          <div id="obsMsg" class="msg"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Coaching / Task History</h2>
+        <div id="employeeMasterHistoryWrap"></div>
+      </div>
+      <div class="card">
+        <h2>ES Tracker Incidents</h2>
+        <div id="employeeEsHistoryWrap"></div>
+      </div>
+    </div>
+  </section>

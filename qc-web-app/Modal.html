@@ -1,0 +1,91 @@
+<div id="entryModalOverlay" class="modal-overlay hidden" onclick="if(event.target===this) closeEntryModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="entryModalTitle" style="margin:0">Add Entry</h2>
+      <button type="button" class="link-btn" onclick="closeEntryModal()" style="font-size:18px; text-decoration:none">&times;</button>
+    </div>
+    <form id="entryForm" onsubmit="submitEntryModal(event)">
+      <input type="hidden" id="e_ID">
+      <div class="row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="e_Date" required>
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <select id="e_Type" required></select>
+        </div>
+        <div class="field">
+          <label>Person</label>
+          <input type="text" id="e_Person" list="employeeNames" placeholder="Employee / attendee name">
+          <datalist id="employeeNames"></datalist>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:2">
+          <label>Topic / Task</label>
+          <input type="text" id="e_Topic" required>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:2">
+          <label>Details / Notes</label>
+          <textarea id="e_Details" placeholder="Agenda, discussion notes, commendable notes..."></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Issues / Errors</label>
+          <textarea id="e_Issues" placeholder="Issues, concerns, errors observed..."></textarea>
+        </div>
+        <div class="field">
+          <label>Goals / Action Items</label>
+          <textarea id="e_GoalsActionItems" placeholder="Goals, action items, next steps..."></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" id="e_DueDate">
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="e_Status"></select>
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <select id="e_Priority"><option value=""></option></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:2">
+          <label>Link (recap, doc, form, etc.)</label>
+          <input type="text" id="e_Link">
+        </div>
+      </div>
+      <div class="row" id="recurringRow">
+        <div class="field">
+          <label style="display:flex; align-items:center; gap:6px; margin-bottom:0">
+            <input type="checkbox" id="e_recurring" style="width:auto" onchange="toggleRecurringFields()"> Make this recurring
+          </label>
+        </div>
+      </div>
+      <div class="row hidden" id="recurringFields">
+        <div class="field">
+          <label>Repeat on day of month</label>
+          <input type="number" id="e_recurDay" min="1" max="31" value="5">
+        </div>
+        <div class="field">
+          <label>For how many months</label>
+          <input type="number" id="e_recurMonths" min="1" max="60" value="12">
+        </div>
+        <div class="field">
+          <p class="muted" style="margin-top:22px">Creates one entry per month right away (e.g. the 5th of every month for 12 months). The Date field above is ignored when recurring is on.</p>
+        </div>
+      </div>
+      <button type="submit" class="primary" id="entrySubmitBtn">Save Entry</button>
+      <button type="button" class="secondary" onclick="closeEntryModal()">Cancel</button>
+      <div id="entryMsg" class="msg"></div>
+    </form>
+  </div>
+</div>

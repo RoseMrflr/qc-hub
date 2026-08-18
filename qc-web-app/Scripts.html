@@ -1,0 +1,737 @@
+<script>
+  let OPTIONS = null;
+  let EMPLOYEES = [];
+  let ALL_ENTRIES = [];
+  let showOverdueOnly = false;
+  let dateFilter = null; // 'yyyy-mm-dd' or null
+  let calViewYear, calViewMonth; // 0-based month, set on first loadDashboard()
+  const OPEN_STATUSES = ['Open', 'In Progress', 'Pending'];
+  const TYPE_COLOR_PALETTE = ['#2F5597','#C0392B','#146c43','#d9822b','#6f42c1','#0d9488','#be185d','#4b5563','#0369a1','#a16207'];
+  const typeColorMap_ = {};
+  function getTypeColor(type) {
+    const key = type || 'Other';
+    if (!typeColorMap_[key]) {
+      const idx = Object.keys(typeColorMap_).length % TYPE_COLOR_PALETTE.length;
+      typeColorMap_[key] = TYPE_COLOR_PALETTE[idx];
+    }
+    return typeColorMap_[key];
+  }
+  function todayStr_() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function isOverdue(e) {
+    return !!(e.DueDate && e.DueDate < todayStr_() && OPEN_STATUSES.includes(e.Status));
+  }
+  function isDone(e) {
+    return !OPEN_STATUSES.includes(e.Status);
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.page).classList.add('active');
+      if (btn.dataset.page === 'tasks') loadDashboard();
+      if (btn.dataset.page === 'estracker') loadEsTable();
+      if (btn.dataset.page === 'employees') { showEmployeeList(); loadEmployeeList(); }
+      if (btn.dataset.page === 'config') loadConfigPage();
+      if (btn.dataset.page === 'archive') renderArchiveTable();
+    });
+  });
+
+  function fillSelect(id, options, includeBlank) {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    if (includeBlank) el.appendChild(new Option('', ''));
+    options.forEach(o => el.appendChild(new Option(o, o)));
+  }
+
+  function fillDatalist(id, names) {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    names.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n;
+      el.appendChild(opt);
+    });
+  }
+
+  function init() {
+    google.script.run.withSuccessHandler(opts => {
+      OPTIONS = opts;
+      fillSelect('e_Type', opts.type, false);
+      fillSelect('e_Status', opts.status, false);
+      fillSelect('e_Priority', opts.priority, true);
+      fillSelect('es_ImpactLevel', opts.impact, false);
+      fillSelect('es_ErrorClass', opts.errorClass, false);
+      fillSelect('es_Status', opts.status, false);
+      fillSelect('obs_Type', opts.type, false);
+      fillSelect('obs_Status', opts.status, false);
+      const obsTypeSel = document.getElementById('obs_Type');
+      if ([...obsTypeSel.options].some(o => o.value === 'Observation')) obsTypeSel.value = 'Observation';
+    }).getOptions();
+    google.script.run.withSuccessHandler(names => {
+      fillDatalist('employeeNames', names);
+      fillDatalist('employeeNames2', names);
+    }).getEmployeeNames();
+    loadDashboard();
+  }
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function badgeClass(status) {
+    return (status || '').toLowerCase().replace(/\\s+/g, '');
+  }
+
+  // ---------- ADD / EDIT ENTRY MODAL ----------
+  let modalMode = 'add'; // 'add' | 'edit'
+
+  function openAddModal() {
+    modalMode = 'add';
+    document.getElementById('entryModalTitle').textContent = 'Add Entry';
+    document.getElementById('entryForm').reset();
+    document.getElementById('e_ID').value = '';
+    document.getElementById('recurringRow').classList.remove('hidden');
+    document.getElementById('recurringFields').classList.add('hidden');
+    document.getElementById('e_Date').required = true;
+    document.getElementById('entryMsg').textContent = '';
+    document.getElementById('entryMsg').className = 'msg';
+    document.getElementById('entryModalOverlay').classList.remove('hidden');
+  }
+
+  function openEditModal(id) {
+    const e = ALL_ENTRIES.find(x => Number(x.ID) === Number(id));
+    if (!e) return;
+    modalMode = 'edit';
+    document.getElementById('entryModalTitle').textContent = 'Edit Entry';
+    document.getElementById('entryForm').reset();
+    document.getElementById('e_ID').value = e.ID;
+    document.getElementById('e_Date').value = e.Date || '';
+    document.getElementById('e_Type').value = e.Type || '';
+    document.getElementById('e_Person').value = e.Person || '';
+    document.getElementById('e_Topic').value = e.Topic || '';
+    document.getElementById('e_Details').value = e.Details || '';
+    document.getElementById('e_Issues').value = e.Issues || '';
+    document.getElementById('e_GoalsActionItems').value = e.GoalsActionItems || '';
+    document.getElementById('e_DueDate').value = e.DueDate || '';
+    document.getElementById('e_Status').value = e.Status || '';
+    document.getElementById('e_Priority').value = e.Priority || '';
+    document.getElementById('e_Link').value = e.Link || '';
+    document.getElementById('recurringRow').classList.add('hidden');
+    document.getElementById('recurringFields').classList.add('hidden');
+    document.getElementById('e_Date').required = true;
+    document.getElementById('entryMsg').textContent = '';
+    document.getElementById('entryMsg').className = 'msg';
+    document.getElementById('entryModalOverlay').classList.remove('hidden');
+  }
+
+  function closeEntryModal() {
+    document.getElementById('entryModalOverlay').classList.add('hidden');
+  }
+
+  function submitEntryModal(ev) {
+    ev.preventDefault();
+    const btn = document.getElementById('entrySubmitBtn');
+    btn.disabled = true;
+    const base = {
+      Type: document.getElementById('e_Type').value,
+      Topic: document.getElementById('e_Topic').value,
+      Person: document.getElementById('e_Person').value,
+      Details: document.getElementById('e_Details').value,
+      Issues: document.getElementById('e_Issues').value,
+      GoalsActionItems: document.getElementById('e_GoalsActionItems').value,
+      Status: document.getElementById('e_Status').value,
+      Priority: document.getElementById('e_Priority').value,
+      Link: document.getElementById('e_Link').value
+    };
+
+    if (modalMode === 'edit') {
+      const entry = Object.assign({ ID: document.getElementById('e_ID').value }, base, {
+        Date: document.getElementById('e_Date').value,
+        DueDate: document.getElementById('e_DueDate').value
+      });
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          if (res.success) { closeEntryModal(); loadDashboard(); }
+          else { document.getElementById('entryMsg').className = 'msg err'; document.getElementById('entryMsg').textContent = 'Could not save: ' + res.error; }
+        })
+        .withFailureHandler(err => { btn.disabled = false; showErr(err, 'entryMsg'); })
+        .updateMasterLogEntry(entry);
+      return;
+    }
+
+    const recurring = document.getElementById('e_recurring').checked;
+    if (recurring) {
+      const day = document.getElementById('e_recurDay').value;
+      const months = document.getElementById('e_recurMonths').value;
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          closeEntryModal();
+          loadDashboard();
+        })
+        .withFailureHandler(err => { btn.disabled = false; showErr(err, 'entryMsg'); })
+        .addRecurringMasterLogEntries(base, day, months);
+    } else {
+      const entry = Object.assign({}, base, {
+        Date: document.getElementById('e_Date').value,
+        DueDate: document.getElementById('e_DueDate').value
+      });
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          closeEntryModal();
+          loadDashboard();
+        })
+        .withFailureHandler(err => { btn.disabled = false; showErr(err, 'entryMsg'); })
+        .addMasterLogEntry(entry);
+    }
+  }
+
+  function toggleRecurringFields() {
+    const on = document.getElementById('e_recurring').checked;
+    document.getElementById('recurringFields').classList.toggle('hidden', !on);
+    document.getElementById('e_Date').required = !on;
+  }
+
+  // ---------- TASKS ----------
+  function loadDashboard() {
+    document.getElementById('statGrid').innerHTML = '<div class="spinner">Loading…</div>';
+    google.script.run.withSuccessHandler(renderDashboard).withFailureHandler(showErr).getDashboardData();
+
+    document.getElementById('entriesTableWrap').innerHTML = '<span class="spinner">Loading…</span>';
+    google.script.run.withSuccessHandler(entries => {
+      ALL_ENTRIES = entries;
+      if (calViewYear === undefined) {
+        const now = new Date();
+        calViewYear = now.getFullYear();
+        calViewMonth = now.getMonth();
+      }
+      renderCalendar();
+      renderEntriesTable();
+    }).withFailureHandler(err => showErr(err, 'entriesTableWrap')).getMasterLogEntries();
+  }
+
+  function renderDashboard(d) {
+    const stats = [
+      {label: 'Total Log Entries', val: d.total, cls: ''},
+      {label: 'Open / Pending', val: d.open, cls: 'amber'},
+      {label: 'Completed', val: d.completed, cls: 'green'},
+      {label: 'Overdue', val: d.overdue, cls: 'warn'},
+      {label: 'Due This Week', val: d.dueThisWeek, cls: 'amber'},
+      {label: 'ES Tracker — Open', val: d.esOpen + ' / ' + d.esTotal, cls: 'warn'}
+    ];
+    document.getElementById('statGrid').innerHTML = stats.map(s =>
+      `<div class="stat ${s.cls}"><div class="num">${s.val}</div><div class="label">${s.label}</div></div>`
+    ).join('');
+  }
+
+  // Read-only history table (used on the Employees page).
+  function renderEntryTable(rows) {
+    if (!rows.length) return '<p class="muted">No entries yet.</p>';
+    return `<table><thead><tr><th>Date</th><th>Type</th><th>Topic</th><th>Details</th><th>Issues</th><th>Goals / Action Items</th><th>Person</th><th>Status</th><th>Due</th></tr></thead><tbody>` +
+      rows.map(r => `<tr>
+        <td>${escapeHtml(r.Date)}</td>
+        <td>${escapeHtml(r.Type)}</td>
+        <td>${escapeHtml(r.Topic)}</td>
+        <td>${escapeHtml((r.Details||'').slice(0,140))}${(r.Details||'').length>140?'…':''}</td>
+        <td>${escapeHtml((r.Issues||'').slice(0,100))}${(r.Issues||'').length>100?'…':''}</td>
+        <td>${escapeHtml((r.GoalsActionItems||'').slice(0,100))}${(r.GoalsActionItems||'').length>100?'…':''}</td>
+        <td>${escapeHtml(r.Person)}</td>
+        <td><span class="badge ${badgeClass(r.Status)}">${escapeHtml(r.Status)}</span></td>
+        <td>${escapeHtml(r.DueDate)}</td>
+      </tr>`).join('') + `</tbody></table>`;
+  }
+
+  // ---------- ENTRIES TABLE (editable, sortable, filterable) ----------
+  const ENTRY_COLS_ = ['Date','Type','Topic','Person','Details','Issues','GoalsActionItems','DueDate','Status','Priority','Link'];
+  const ENTRY_COL_LABELS_ = {Date:'Date',Type:'Type',Topic:'Topic',Person:'Person',Details:'Details',Issues:'Issues',GoalsActionItems:'Goals / Action Items',DueDate:'Due',Status:'Status',Priority:'Priority',Link:'Link'};
+
+  function renderEntriesTable() {
+    let list = ALL_ENTRIES.filter(e => !e.Archived);
+    if (dateFilter) list = list.filter(e => e.Date === dateFilter);
+    if (showOverdueOnly) list = list.filter(isOverdue);
+
+    const sortBy = document.getElementById('sortBySelect').value;
+    list.sort((a, b) => {
+      const ao = isOverdue(a) ? 0 : 1;
+      const bo = isOverdue(b) ? 0 : 1;
+      if (ao !== bo) return ao - bo;
+      if (sortBy === 'person') {
+        const pc = (a.Person || '').localeCompare(b.Person || '');
+        if (pc !== 0) return pc;
+      } else if (sortBy === 'type') {
+        const tc = (a.Type || '').localeCompare(b.Type || '');
+        if (tc !== 0) return tc;
+      }
+      return (b.Date || '').localeCompare(a.Date || '');
+    });
+
+    const wrap = document.getElementById('entriesTableWrap');
+    if (!list.length) {
+      wrap.innerHTML = '<p class="muted">No entries match.</p>';
+      return;
+    }
+
+    wrap.innerHTML = renderEntriesTableHtml_(list, { archiveAction: true });
+  }
+
+  // Shared table renderer for both the Tasks entries list and the Archive tab.
+  // opts.archiveAction: show an "Archive" button on done/completed rows.
+  // opts.unarchiveAction: show an "Unarchive" button on every row.
+  function renderEntriesTableHtml_(list, opts) {
+    opts = opts || {};
+    let html = '<div style="overflow-x:auto"><table class="entries-table"><thead><tr>' +
+      ENTRY_COLS_.map(c => `<th>${ENTRY_COL_LABELS_[c]}</th>`).join('') + '<th class="actions-col"></th></tr></thead><tbody>';
+
+    list.forEach(e => {
+      const rowClasses = [];
+      if (isOverdue(e)) rowClasses.push('overdue-row');
+      const classAttr = rowClasses.length ? ` class="${rowClasses.join(' ')}"` : '';
+
+      let actionBtn = '';
+      if (opts.unarchiveAction) {
+        actionBtn = `<button type="button" class="secondary btn-sm" onclick="event.stopPropagation(); unarchiveEntry(${e.ID})">Unarchive</button>`;
+      } else if (opts.archiveAction && isDone(e)) {
+        actionBtn = `<button type="button" class="secondary btn-sm" onclick="event.stopPropagation(); archiveEntry(${e.ID})">Archive</button>`;
+      }
+
+      html += `<tr${classAttr} onclick="openEditModal(${e.ID})" style="cursor:pointer">` +
+        ENTRY_COLS_.map(c => `<td>${viewCellHtml_(e, c)}</td>`).join('') +
+        `<td class="actions-col">${actionBtn}</td></tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    return html;
+  }
+
+  function viewCellHtml_(e, col) {
+    if (col === 'Status') return `<span class="badge ${badgeClass(e.Status)}">${escapeHtml(e.Status)}</span>`;
+    const v = e[col] || '';
+    const s = escapeHtml(String(v));
+    return s.length > 80 ? s.slice(0, 80) + '…' : s;
+  }
+
+  function archiveEntry(id) {
+    google.script.run
+      .withSuccessHandler(res => { if (res.success) loadDashboard(); else alert('Could not archive: ' + res.error); })
+      .withFailureHandler(err => alert('Error: ' + (err.message || err)))
+      .archiveMasterLogEntry(id, true);
+  }
+
+  function unarchiveEntry(id) {
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.success) {
+          google.script.run.withSuccessHandler(entries => { ALL_ENTRIES = entries; renderArchiveTable(); }).getMasterLogEntries();
+        } else alert('Could not unarchive: ' + res.error);
+      })
+      .withFailureHandler(err => alert('Error: ' + (err.message || err)))
+      .archiveMasterLogEntry(id, false);
+  }
+
+  function renderArchiveTable() {
+    const wrap = document.getElementById('archiveTableWrap');
+    if (!wrap) return;
+    const list = ALL_ENTRIES.filter(e => e.Archived).sort((a, b) => (b.Date || '').localeCompare(a.Date || ''));
+    if (!list.length) {
+      wrap.innerHTML = '<p class="muted">No archived entries yet.</p>';
+      return;
+    }
+    wrap.innerHTML = renderEntriesTableHtml_(list, { unarchiveAction: true });
+  }
+
+  function toggleOverdueOnly() {
+    showOverdueOnly = !showOverdueOnly;
+    const btn = document.getElementById('overdueToggleBtn');
+    btn.textContent = showOverdueOnly ? 'Show all entries' : 'Show overdue only';
+    btn.classList.toggle('active-toggle', showOverdueOnly);
+    renderEntriesTable();
+  }
+
+function toggleBulkArchiveWeekInput() {
+  const preset = document.getElementById('bulkArchiveSelect').value;
+  const wrap = document.getElementById('bulkArchiveWeekWrap');
+  if (wrap) wrap.classList.toggle('hidden', preset !== 'weeknum');
+}
+
+function getISOWeekParts_(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  const dayNum = (date.getUTCDay() + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
+  const week = 1 + Math.round((date - firstThursday) / (7 * 24 * 3600 * 1000));
+  return { week: week, year: date.getUTCFullYear() };
+}
+
+function bulkArchive() {
+  const preset = document.getElementById('bulkArchiveSelect').value;
+  if (!preset) { alert('Choose a bulk archive option first.'); return; }
+  let label = '';
+  let matches = ALL_ENTRIES.filter(e => !e.Archived && isDone(e));
+  const today = todayStr_();
+  if (preset === 'thisweek') {
+    const cur = getISOWeekParts_(today);
+    matches = matches.filter(e => { if (!e.Date) return false; const p = getISOWeekParts_(e.Date); return p.week === cur.week && p.year === cur.year; });
+    label = 'This Week';
+  } else if (preset === 'thismonth') {
+    const ym = today.slice(0, 7);
+    matches = matches.filter(e => e.Date && e.Date.slice(0, 7) === ym);
+    label = 'This Month';
+  } else if (preset === 'weeknum') {
+    const wkInput = parseInt(document.getElementById('bulkArchiveWeekNum').value, 10);
+    if (!wkInput || wkInput < 1 || wkInput > 53) { alert('Enter a valid week number (1-53).'); return; }
+    const curYear = getISOWeekParts_(today).year;
+    matches = matches.filter(e => { if (!e.Date) return false; const p = getISOWeekParts_(e.Date); return p.week === wkInput && p.year === curYear; });
+    label = 'Week ' + wkInput;
+  } else if (preset === 'allcompleted') {
+    label = 'All Completed';
+  }
+
+  if (!matches.length) { alert('No entries match "' + label + '".'); return; }
+  if (!confirm('Archive ' + matches.length + ' entries matching "' + label + '"?')) return;
+
+  const btn = document.getElementById('bulkArchiveBtn');
+  if (btn) btn.disabled = true;
+  const ids = matches.map(e => e.ID);
+  let i = 0;
+  function next() {
+    if (i >= ids.length) {
+      if (btn) btn.disabled = false;
+      loadDashboard();
+      return;
+    }
+    const id = ids[i++];
+    google.script.run
+      .withSuccessHandler(() => next())
+      .withFailureHandler(err => { showErr(err, 'entryMsg'); next(); })
+      .archiveMasterLogEntry(id, true);
+  }
+  next();
+}
+
+  // ---------- MINI MONTHLY CALENDAR ----------
+  function calShiftMonth(delta) {
+    calViewMonth += delta;
+    if (calViewMonth < 0) { calViewMonth = 11; calViewYear--; }
+    if (calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('calMonthLabel').textContent = monthNames[calViewMonth] + ' ' + calViewYear;
+
+    const firstOfMonth = new Date(calViewYear, calViewMonth, 1);
+    const startDow = firstOfMonth.getDay();
+    const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(calViewYear, calViewMonth, 0).getDate();
+    const todayS = todayStr_();
+
+    const byDate = {};
+    ALL_ENTRIES.filter(e => !e.Archived).forEach(e => {
+      if (!e.Date) return;
+      if (!byDate[e.Date]) byDate[e.Date] = [];
+      byDate[e.Date].push(e.Type || 'Other');
+    });
+
+    const cells = [];
+    for (let i = 0; i < startDow; i++) cells.push({day: daysInPrevMonth - startDow + 1 + i, other: true});
+    for (let d = 1; d <= daysInMonth; d++) cells.push({day: d, other: false});
+    let nextDay = 1;
+    while (cells.length % 7 !== 0) cells.push({day: nextDay++, other: true});
+
+    let html = '<thead><tr>' + ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<th>${d}</th>`).join('') + '</tr></thead><tbody><tr>';
+    cells.forEach((c, i) => {
+      if (i > 0 && i % 7 === 0) html += '</tr><tr>';
+      if (c.other) {
+        html += `<td class="other-month">${c.day}</td>`;
+      } else {
+        const dateStr = calViewYear + '-' + String(calViewMonth+1).padStart(2,'0') + '-' + String(c.day).padStart(2,'0');
+        const types = byDate[dateStr] || [];
+        const uniqTypes = [...new Set(types)].slice(0, 4);
+        const dots = uniqTypes.map(t => `<span class="cal-dot" style="background:${getTypeColor(t)}"></span>`).join('');
+        let cls = '';
+        if (dateStr === todayS) cls += ' today';
+        if (dateStr === dateFilter) cls += ' selected';
+        html += `<td class="${cls.trim()}" onclick="onCalDateClick('${dateStr}')">${c.day}<div class="cal-dots">${dots}</div></td>`;
+      }
+    });
+    html += '</tr></tbody>';
+    document.getElementById('calGrid').innerHTML = html;
+
+    const allTypes = [...new Set(ALL_ENTRIES.map(e => e.Type || 'Other'))].slice(0, 10);
+    document.getElementById('calLegend').innerHTML = allTypes.map(t =>
+      `<span class="chip" style="background:${getTypeColor(t)}22; color:${getTypeColor(t)}"><span class="cal-dot" style="background:${getTypeColor(t)};display:inline-block;margin-right:4px"></span>${escapeHtml(t)}</span>`
+    ).join('');
+
+    const filterMsgEl = document.getElementById('calFilterMsg');
+    if (dateFilter) {
+      filterMsgEl.classList.remove('hidden');
+      filterMsgEl.className = 'msg ok';
+      filterMsgEl.innerHTML = 'Filtering entries for <b>' + escapeHtml(dateFilter) + '</b> — <button type="button" class="link-btn" onclick="clearDateFilter()">clear</button>';
+    } else {
+      filterMsgEl.classList.add('hidden');
+    }
+  }
+
+  function onCalDateClick(dateStr) {
+    dateFilter = (dateFilter === dateStr) ? null : dateStr;
+    renderCalendar();
+    renderEntriesTable();
+  }
+
+  function clearDateFilter() {
+    dateFilter = null;
+    renderCalendar();
+    renderEntriesTable();
+  }
+
+  // ---------- ES TRACKER ----------
+  function autofillEmployee(agentAlias) {
+    const emp = EMPLOYEES.find(e => e.Name === agentAlias);
+    if (emp) {
+      document.getElementById('es_EmployeeName').value = emp.RealName || '';
+      document.getElementById('es_Position').value = emp.CurrentPosition || '';
+    }
+  }
+
+  function submitEsEntry(ev) {
+    ev.preventDefault();
+    const entry = {
+      Agent: document.getElementById('es_Agent').value,
+      EmployeeName: document.getElementById('es_EmployeeName').value,
+      Position: document.getElementById('es_Position').value,
+      OrderID: document.getElementById('es_OrderID').value,
+      IncidentDate: document.getElementById('es_IncidentDate').value,
+      ImpactLevel: document.getElementById('es_ImpactLevel').value,
+      ErrorClass: document.getElementById('es_ErrorClass').value,
+      ErrorCategory: document.getElementById('es_ErrorCategory').value,
+      SanctionType: document.getElementById('es_SanctionType').value,
+      ViolationCategory: document.getElementById('es_ViolationCategory').value,
+      Client: document.getElementById('es_Client').value,
+      Feedback: document.getElementById('es_Feedback').value,
+      RootCause: document.getElementById('es_RootCause').value,
+      Status: document.getElementById('es_Status').value
+    };
+    google.script.run
+      .withSuccessHandler(res => {
+        document.getElementById('esMsg').className = 'msg ok';
+        document.getElementById('esMsg').textContent = 'Incident #' + res.id + ' logged.';
+        document.getElementById('esForm').reset();
+        loadEsTable();
+      })
+      .withFailureHandler(err => showErr(err, 'esMsg'))
+      .addEsTrackerEntry(entry);
+  }
+
+  function loadEsTable() {
+    document.getElementById('esTableWrap').innerHTML = '<span class="spinner">Loading…</span>';
+    google.script.run.withSuccessHandler(renderEsTable).withFailureHandler(showErr).getEsTrackerEntries();
+  }
+
+  function renderEsTable(rows) {
+    if (!rows.length) {
+      document.getElementById('esTableWrap').innerHTML = '<p class="muted">No incidents logged yet.</p>';
+      return;
+    }
+    const html = `<table><thead><tr><th>Date</th><th>Employee</th><th>Order</th><th>Error Class</th><th>Status</th><th>Report</th></tr></thead><tbody>` +
+      rows.map(r => `<tr>
+        <td>${escapeHtml(r.IncidentDate)}</td>
+        <td>${escapeHtml(r.EmployeeName)}</td>
+        <td>${escapeHtml(r.OrderID)}</td>
+        <td>${escapeHtml(r.ErrorClass)}</td>
+        <td><span class="badge ${badgeClass(r.Status)}">${escapeHtml(r.Status)}</span></td>
+        <td>${r.DocLink
+            ? `<a class="link" href="${escapeHtml(r.DocLink)}" target="_blank">Open Doc</a>`
+            : `<button class="secondary" onclick="generateDoc(${r.ID}, this)">Generate Doc</button>`}
+        </td>
+      </tr>`).join('') + `</tbody></table>`;
+    document.getElementById('esTableWrap').innerHTML = html;
+  }
+
+  function generateDoc(id, btnEl) {
+    btnEl.disabled = true;
+    btnEl.textContent = 'Generating…';
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.success) { loadEsTable(); }
+        else { btnEl.disabled = false; btnEl.textContent = 'Generate Doc'; alert('Could not generate doc: ' + res.error); }
+      })
+      .withFailureHandler(err => {
+        btnEl.disabled = false; btnEl.textContent = 'Generate Doc';
+        alert('Error: ' + (err.message || err));
+      })
+      .createIncidentDoc(id);
+  }
+
+  // ---------- EMPLOYEES ----------
+  function loadEmployeeList() {
+    document.getElementById('employeeListWrap').innerHTML = '<span class="spinner">Loading…</span>';
+    google.script.run.withSuccessHandler(list => {
+      EMPLOYEES = list;
+      if (!list.length) {
+        document.getElementById('employeeListWrap').innerHTML = '<p class="muted">No employees yet — add some in Config.</p>';
+        return;
+      }
+      document.getElementById('employeeListWrap').innerHTML = list.map(e => `
+        <div class="employee-card" onclick="openEmployee('${e.Name.replace(/'/g,"\\'")}')">
+          <div class="name">${escapeHtml(e.Name)}</div>
+          <div class="real">${escapeHtml(e.RealName)}</div>
+          <div class="pos"><span class="chip current">${escapeHtml(e.CurrentPosition || 'n/a')}</span></div>
+        </div>
+      `).join('');
+    }).withFailureHandler(err => showErr(err, 'employeeListWrap')).getEmployees();
+  }
+
+  function showEmployeeList() {
+    document.getElementById('employeeListView').classList.remove('hidden');
+    document.getElementById('employeeDetailView').classList.add('hidden');
+  }
+
+  function openEmployee(name) {
+    document.getElementById('employeeListView').classList.add('hidden');
+    document.getElementById('employeeDetailView').classList.remove('hidden');
+    document.getElementById('employeeMasterHistoryWrap').innerHTML = '<span class="spinner">Loading…</span>';
+    document.getElementById('employeeEsHistoryWrap').innerHTML = '<span class="spinner">Loading…</span>';
+    document.getElementById('obs_Person').value = name;
+    google.script.run.withSuccessHandler(renderEmployeeDetail).withFailureHandler(err => showErr(err, 'employeeMasterHistoryWrap')).getEmployeeHistory(name);
+  }
+
+  function renderEmployeeDetail(data) {
+    const emp = data.employee || {};
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const curMonthIdx = new Date().getMonth();
+    const chips = months.map((m, i) =>
+      `<span class="chip ${i === curMonthIdx ? 'current' : ''}">${m}: ${escapeHtml(emp[m] || '—')}</span>`
+    ).join('');
+    document.getElementById('employeeDetailHeader').innerHTML = `
+      <h2 style="margin-top:0">${escapeHtml(emp.Name || '')} <span class="muted" style="font-weight:400">— ${escapeHtml(emp.RealName || '')}</span></h2>
+      <div class="chip-row">${chips}</div>
+    `;
+    document.getElementById('employeeMasterHistoryWrap').innerHTML = data.masterEntries.length
+      ? renderEntryTable(data.masterEntries) : '<p class="muted">No coaching / task history yet for this person.</p>';
+    document.getElementById('employeeEsHistoryWrap').innerHTML = data.esEntries.length
+      ? renderEsTable_(data.esEntries) : '<p class="muted">No ES Tracker incidents for this person.</p>';
+  }
+
+  function renderEsTable_(rows) {
+    return `<table><thead><tr><th>Date</th><th>Order</th><th>Error Class</th><th>Feedback</th><th>Status</th></tr></thead><tbody>` +
+      rows.map(r => `<tr>
+        <td>${escapeHtml(r.IncidentDate)}</td>
+        <td>${escapeHtml(r.OrderID)}</td>
+        <td>${escapeHtml(r.ErrorClass)}</td>
+        <td>${escapeHtml((r.Feedback||'').slice(0,140))}${(r.Feedback||'').length>140?'…':''}</td>
+        <td><span class="badge ${badgeClass(r.Status)}">${escapeHtml(r.Status)}</span></td>
+      </tr>`).join('') + `</tbody></table>`;
+  }
+
+  function submitObservation(ev) {
+    ev.preventDefault();
+    const entry = {
+      Date: document.getElementById('obs_Date').value,
+      Type: document.getElementById('obs_Type').value,
+      Topic: document.getElementById('obs_Topic').value,
+      Person: document.getElementById('obs_Person').value,
+      Details: document.getElementById('obs_Details').value,
+      Status: document.getElementById('obs_Status').value
+    };
+    google.script.run
+      .withSuccessHandler(res => {
+        document.getElementById('obsMsg').className = 'msg ok';
+        document.getElementById('obsMsg').textContent = 'Saved.';
+        document.getElementById('obsForm').reset();
+        document.getElementById('obs_Person').value = entry.Person;
+        openEmployee(entry.Person);
+      })
+      .withFailureHandler(err => showErr(err, 'obsMsg'))
+      .addMasterLogEntry(entry);
+  }
+
+  // ---------- CONFIG ----------
+  function loadConfigPage() {
+    google.script.run.withSuccessHandler(opts => {
+      document.getElementById('cfg_type').value = opts.type.join('\\n');
+      document.getElementById('cfg_status').value = opts.status.join('\\n');
+      document.getElementById('cfg_priority').value = opts.priority.join('\\n');
+      document.getElementById('cfg_impact').value = opts.impact.join('\\n');
+      document.getElementById('cfg_errorClass').value = opts.errorClass.join('\\n');
+    }).getOptions();
+    google.script.run.withSuccessHandler(renderRosterTable).getEmployees();
+  }
+
+  function saveConfigOptions() {
+    const parse = id => document.getElementById(id).value.split('\\n').map(s => s.trim()).filter(Boolean);
+    const lists = {
+      type: parse('cfg_type'),
+      status: parse('cfg_status'),
+      priority: parse('cfg_priority'),
+      impact: parse('cfg_impact'),
+      errorClass: parse('cfg_errorClass')
+    };
+    google.script.run.withSuccessHandler(() => {
+      document.getElementById('cfgMsg').className = 'msg ok';
+      document.getElementById('cfgMsg').textContent = 'Saved. Reloading dropdowns…';
+      init();
+    }).withFailureHandler(err => showErr(err, 'cfgMsg')).saveOptions(lists);
+  }
+
+  const MONTHS_ = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let rosterRows = [];
+
+  function renderRosterTable(employees) {
+    rosterRows = employees.map(e => ({...e}));
+    drawRosterTable();
+  }
+
+  function drawRosterTable() {
+    const cols = ['Name','RealName'].concat(MONTHS_);
+    let html = '<thead><tr>' + cols.map(c => `<th>${c === 'RealName' ? 'Real Name' : c}</th>`).join('') + '<th></th></tr></thead><tbody>';
+    rosterRows.forEach((row, i) => {
+      html += '<tr>' + cols.map(c =>
+        `<td><input value="${escapeHtml(row[c] || '')}" onchange="rosterRows[${i}]['${c}']=this.value"></td>`
+      ).join('') + `<td><button class="link-btn" onclick="removeRosterRow(${i})">remove</button></td></tr>`;
+    });
+    html += '</tbody>';
+    document.getElementById('rosterTable').innerHTML = html;
+  }
+
+  function addRosterRow() {
+    const blank = {Name:'', RealName:''};
+    MONTHS_.forEach(m => blank[m] = '');
+    rosterRows.push(blank);
+    drawRosterTable();
+  }
+
+  function removeRosterRow(i) {
+    rosterRows.splice(i, 1);
+    drawRosterTable();
+  }
+
+  function saveRoster() {
+    google.script.run.withSuccessHandler(res => {
+      document.getElementById('rosterMsg').className = 'msg ok';
+      document.getElementById('rosterMsg').textContent = 'Saved ' + res.count + ' employees.';
+      google.script.run.withSuccessHandler(names => {
+        fillDatalist('employeeNames', names);
+        fillDatalist('employeeNames2', names);
+      }).getEmployeeNames();
+    }).withFailureHandler(err => showErr(err, 'rosterMsg')).saveEmployees(rosterRows);
+  }
+
+  function showErr(err, elId) {
+    const el = document.getElementById(elId || 'entryMsg');
+    if (!el) { console.error(err); return; }
+    el.className = 'msg err';
+    el.textContent = 'Error: ' + (err.message || err);
+  }
+
+  init();
+</script>
