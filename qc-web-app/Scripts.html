@@ -71,16 +71,18 @@
       fillSelect('e_Status', opts.status, false);
       fillSelect('es_ImpactLevel', opts.impact, false);
       fillSelect('es_ErrorClass', opts.errorClass, false);
-      fillSelect('es_Status', opts.status, false);
       fillSelect('obs_Type', opts.type, false);
       fillSelect('obs_Status', opts.status, false);
+      fillDatalist('positionOptions', opts.position || []);
       const obsTypeSel = document.getElementById('obs_Type');
       if ([...obsTypeSel.options].some(o => o.value === 'Observation')) obsTypeSel.value = 'Observation';
     }).getOptions();
-    google.script.run.withSuccessHandler(names => {
+    google.script.run.withSuccessHandler(list => {
+      EMPLOYEES = list;
+      const names = list.map(e => e.Name);
       fillDatalist('employeeNames', names);
       fillDatalist('employeeNames2', names);
-    }).getEmployeeNames();
+    }).getEmployees();
     loadDashboard();
   }
 
@@ -240,7 +242,7 @@
     if (!rows.length) return '<p class="muted">No entries yet.</p>';
     return `<table><thead><tr><th>Date</th><th>Type</th><th>Topic</th><th>Details</th><th>Issues</th><th>Goals / Action Items</th><th>Person</th><th>Status</th><th>Due</th></tr></thead><tbody>` +
       rows.map(r => `<tr>
-        <td>${escapeHtml(r.Date)}</td>
+        <td>${escapeHtml(fmtDateLabel_(r.Date))}</td>
         <td>${escapeHtml(r.Type)}</td>
         <td>${escapeHtml(r.Topic)}</td>
         <td>${escapeHtml((r.Details||'').slice(0,140))}${(r.Details||'').length>140?'…':''}</td>
@@ -248,7 +250,7 @@
         <td>${escapeHtml((r.GoalsActionItems||'').slice(0,100))}${(r.GoalsActionItems||'').length>100?'…':''}</td>
         <td>${escapeHtml(r.Person)}</td>
         <td><span class="badge ${badgeClass(r.Status)}">${escapeHtml(r.Status)}</span></td>
-        <td>${escapeHtml(r.DueDate)}</td>
+        <td>${escapeHtml(fmtDateLabel_(r.DueDate))}</td>
       </tr>`).join('') + `</tbody></table>`;
   }
 
@@ -592,6 +594,8 @@ function archiveClosedEntries() {
   }
 
   // ---------- ES TRACKER ----------
+  let ALL_ES_ENTRIES = [];
+
   function autofillEmployee(agentAlias) {
     const emp = EMPLOYEES.find(e => e.Name === agentAlias);
     if (emp) {
@@ -600,9 +604,8 @@ function archiveClosedEntries() {
     }
   }
 
-  function submitEsEntry(ev) {
-    ev.preventDefault();
-    const entry = {
+  function readEsForm_() {
+    return {
       Agent: document.getElementById('es_Agent').value,
       EmployeeName: document.getElementById('es_EmployeeName').value,
       Position: document.getElementById('es_Position').value,
@@ -615,43 +618,296 @@ function archiveClosedEntries() {
       ViolationCategory: document.getElementById('es_ViolationCategory').value,
       Client: document.getElementById('es_Client').value,
       Feedback: document.getElementById('es_Feedback').value,
-      RootCause: document.getElementById('es_RootCause').value,
-      Status: document.getElementById('es_Status').value
+      RootCause: document.getElementById('es_RootCause').value
     };
+  }
+
+  function submitEsEntry(ev) {
+    ev.preventDefault();
+    const id = document.getElementById('es_ID').value;
+    const entry = readEsForm_();
+    const btn = document.getElementById('esSubmitBtn');
+    btn.disabled = true;
+
+    if (id) {
+      entry.ID = id;
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          if (res.success) {
+            document.getElementById('esMsg').className = 'msg ok';
+            document.getElementById('esMsg').textContent = 'Incident #' + id + ' updated.';
+            cancelEsEdit();
+            loadEsTable();
+          } else {
+            document.getElementById('esMsg').className = 'msg err';
+            document.getElementById('esMsg').textContent = 'Could not update: ' + res.error;
+          }
+        })
+        .withFailureHandler(err => { btn.disabled = false; showErr(err, 'esMsg'); })
+        .updateEsTrackerEntry(entry);
+      return;
+    }
+
     google.script.run
       .withSuccessHandler(res => {
         document.getElementById('esMsg').className = 'msg ok';
-        document.getElementById('esMsg').textContent = 'Incident #' + res.id + ' logged.';
+        document.getElementById('esMsg').textContent = 'Incident #' + res.id + ' logged. Generating PDF…';
         document.getElementById('esForm').reset();
-        loadEsTable();
+        google.script.run
+          .withSuccessHandler(pdfRes => {
+            btn.disabled = false;
+            document.getElementById('esMsg').className = pdfRes.success ? 'msg ok' : 'msg err';
+            document.getElementById('esMsg').textContent = pdfRes.success
+              ? 'Incident #' + res.id + ' logged and PDF generated.'
+              : 'Incident #' + res.id + ' logged, but the PDF failed: ' + pdfRes.error;
+            loadEsTable();
+          })
+          .withFailureHandler(err => {
+            btn.disabled = false;
+            document.getElementById('esMsg').className = 'msg err';
+            document.getElementById('esMsg').textContent = 'Incident #' + res.id + ' logged, but the PDF failed: ' + (err.message || err);
+            loadEsTable();
+          })
+          .createIncidentDoc(res.id);
       })
-      .withFailureHandler(err => showErr(err, 'esMsg'))
+      .withFailureHandler(err => { btn.disabled = false; showErr(err, 'esMsg'); })
       .addEsTrackerEntry(entry);
+  }
+
+  function openEsEdit(id) {
+    const r = ALL_ES_ENTRIES.find(e => Number(e.ID) === Number(id));
+    if (!r) return;
+    document.getElementById('es_ID').value = r.ID;
+    document.getElementById('es_Agent').value = r.Agent || '';
+    document.getElementById('es_EmployeeName').value = r.EmployeeName || '';
+    document.getElementById('es_Position').value = r.Position || '';
+    document.getElementById('es_OrderID').value = r.OrderID || '';
+    document.getElementById('es_IncidentDate').value = r.IncidentDate || '';
+    document.getElementById('es_ImpactLevel').value = r.ImpactLevel || '';
+    document.getElementById('es_ErrorClass').value = r.ErrorClass || '';
+    document.getElementById('es_ErrorCategory').value = r.ErrorCategory || '';
+    document.getElementById('es_SanctionType').value = r.SanctionType || '';
+    document.getElementById('es_ViolationCategory').value = r.ViolationCategory || '';
+    document.getElementById('es_Client').value = r.Client || '';
+    document.getElementById('es_Feedback').value = r.Feedback || '';
+    document.getElementById('es_RootCause').value = r.RootCause || '';
+    document.getElementById('esSubmitBtn').textContent = 'Update Incident';
+    document.getElementById('esCancelBtn').classList.remove('hidden');
+    document.getElementById('esDeleteBtn').classList.remove('hidden');
+    document.getElementById('esMsg').textContent = '';
+    document.getElementById('esMsg').className = 'msg';
+  }
+
+  function cancelEsEdit() {
+    document.getElementById('esForm').reset();
+    document.getElementById('es_ID').value = '';
+    document.getElementById('esSubmitBtn').textContent = 'Log Incident & Generate PDF';
+    document.getElementById('esCancelBtn').classList.add('hidden');
+    document.getElementById('esDeleteBtn').classList.add('hidden');
+    document.getElementById('esMsg').textContent = '';
+    document.getElementById('esMsg').className = 'msg';
+  }
+
+  function deleteEsEntry() {
+    const id = document.getElementById('es_ID').value;
+    if (!id) return;
+    if (!confirm('Delete incident #' + id + '? This cannot be undone.')) return;
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.success) { cancelEsEdit(); loadEsTable(); }
+        else { alert('Could not delete: ' + res.error); }
+      })
+      .withFailureHandler(err => alert('Error: ' + (err.message || err)))
+      .deleteEsTrackerEntry(id);
   }
 
   function loadEsTable() {
     document.getElementById('esTableWrap').innerHTML = '<span class="spinner">Loading…</span>';
-    google.script.run.withSuccessHandler(renderEsTable).withFailureHandler(showErr).getEsTrackerEntries();
+    google.script.run
+      .withSuccessHandler(rows => { ALL_ES_ENTRIES = rows; renderEsTable(); })
+      .withFailureHandler(showErr)
+      .getEsTrackerEntries();
   }
 
-  function renderEsTable(rows) {
-    if (!rows.length) {
+  // ---------- ES TRACKER TABLE: sortable + filterable (Date, Employee, Status) ----------
+  const ES_SORTABLE_COLS_ = ['IncidentDate', 'Agent', 'Status'];
+  const ES_FILTERABLE_COLS_ = ['IncidentDate', 'Agent', 'Status'];
+  let esSortState = {key: 'IncidentDate', dir: 'desc'};
+  let esColumnFilters = {}; // key -> Set of allowed values (IncidentDate -> {years:Set, months:Set})
+  let esActiveFilterMenu = null;
+
+  function esDistinctValues_(key) {
+    return Array.from(new Set(ALL_ES_ENTRIES.map(e => e[key] || '').filter(v => v !== ''))).sort();
+  }
+  function esDistinctDateParts_() {
+    const dates = ALL_ES_ENTRIES.filter(e => e.IncidentDate).map(e => e.IncidentDate);
+    const years = Array.from(new Set(dates.map(d => d.slice(0, 4)))).sort();
+    const months = Array.from(new Set(dates.map(d => d.slice(5, 7)))).sort();
+    return {years: years, months: months};
+  }
+  function esCloseFilterMenu_() {
+    if (esActiveFilterMenu) { esActiveFilterMenu.remove(); esActiveFilterMenu = null; }
+  }
+  function esOnHeaderSortClick(key) {
+    if (esSortState.key === key) { esSortState.dir = esSortState.dir === 'asc' ? 'desc' : 'asc'; }
+    else { esSortState = {key: key, dir: key === 'IncidentDate' ? 'desc' : 'asc'}; }
+    renderEsTable();
+  }
+  function esToggleFilterMenu(ev, key) {
+    ev.stopPropagation();
+    const wasOpenForKey = esActiveFilterMenu && esActiveFilterMenu.dataset.key === key;
+    esCloseFilterMenu_();
+    if (wasOpenForKey) return;
+
+    const menu = document.createElement('div');
+    menu.className = 'col-filter-menu';
+    menu.dataset.key = key;
+
+    if (key === 'IncidentDate') {
+      const parts = esDistinctDateParts_();
+      const sel = esColumnFilters.IncidentDate || {};
+      menu.innerHTML =
+        '<div class="col-filter-actions"><button type="button" onclick="event.stopPropagation();esSetDateFilterAll(true)">All</button><button type="button" onclick="event.stopPropagation();esSetDateFilterAll(false)">None</button></div>' +
+        '<div class="col-filter-group-label">Year</div>' +
+        parts.years.map(y => {
+          const checked = !sel.years || sel.years.has(y);
+          return `<label class="col-filter-item"><input type="checkbox" data-datepart="year" data-val="${y}" ${checked ? 'checked' : ''} onclick="event.stopPropagation()" onchange="esOnDateFilterCheck()"> ${y}</label>`;
+        }).join('') +
+        '<div class="col-filter-group-label">Month</div>' +
+        parts.months.map(m => {
+          const checked = !sel.months || sel.months.has(m);
+          const label = MONTH_NAMES_[parseInt(m, 10) - 1] || m;
+          return `<label class="col-filter-item"><input type="checkbox" data-datepart="month" data-val="${m}" ${checked ? 'checked' : ''} onclick="event.stopPropagation()" onchange="esOnDateFilterCheck()"> ${label}</label>`;
+        }).join('');
+    } else {
+      const values = esDistinctValues_(key);
+      const selected = esColumnFilters[key];
+      menu.innerHTML =
+        `<div class="col-filter-actions"><button type="button" onclick="event.stopPropagation();esSetColumnFilterAll('${key}',true)">All</button><button type="button" onclick="event.stopPropagation();esSetColumnFilterAll('${key}',false)">None</button></div>` +
+        values.map(v => {
+          const checked = !selected || selected.has(v);
+          return `<label class="col-filter-item"><input type="checkbox" data-val="${escapeHtml(v)}" ${checked ? 'checked' : ''} onclick="event.stopPropagation()" onchange="esOnColumnFilterCheck('${key}')"> ${escapeHtml(v)}</label>`;
+        }).join('');
+    }
+
+    document.body.appendChild(menu);
+    const rect = ev.currentTarget.getBoundingClientRect();
+    menu.style.top = (window.scrollY + rect.bottom + 4) + 'px';
+    menu.style.left = (window.scrollX + rect.left) + 'px';
+    esActiveFilterMenu = menu;
+    setTimeout(() => document.addEventListener('click', esCloseFilterMenu_, {once: true}), 0);
+  }
+  function esOnColumnFilterCheck(key) {
+    const boxes = document.querySelectorAll('.col-filter-menu input[data-val]');
+    const values = esDistinctValues_(key);
+    const checked = Array.from(boxes).filter(b => b.checked).map(b => b.dataset.val);
+    if (checked.length === values.length) { delete esColumnFilters[key]; } else { esColumnFilters[key] = new Set(checked); }
+    renderEsTable();
+  }
+  function esSetColumnFilterAll(key, allOn) {
+    document.querySelectorAll('.col-filter-menu input[data-val]').forEach(b => { b.checked = allOn; });
+    esOnColumnFilterCheck(key);
+  }
+  function esOnDateFilterCheck() {
+    const parts = esDistinctDateParts_();
+    const yearBoxes = document.querySelectorAll('.col-filter-menu input[data-datepart="year"]');
+    const monthBoxes = document.querySelectorAll('.col-filter-menu input[data-datepart="month"]');
+    const checkedYears = Array.from(yearBoxes).filter(b => b.checked).map(b => b.dataset.val);
+    const checkedMonths = Array.from(monthBoxes).filter(b => b.checked).map(b => b.dataset.val);
+    const f = {};
+    if (checkedYears.length !== parts.years.length) f.years = new Set(checkedYears);
+    if (checkedMonths.length !== parts.months.length) f.months = new Set(checkedMonths);
+    if (!f.years && !f.months) { delete esColumnFilters.IncidentDate; } else { esColumnFilters.IncidentDate = f; }
+    renderEsTable();
+  }
+  function esSetDateFilterAll(allOn) {
+    document.querySelectorAll('.col-filter-menu input[data-datepart]').forEach(b => { b.checked = allOn; });
+    esOnDateFilterCheck();
+  }
+  function esHeaderCell_(label, key) {
+    const sortable = ES_SORTABLE_COLS_.includes(key);
+    const filterable = ES_FILTERABLE_COLS_.includes(key);
+    const active = sortable && esSortState.key === key;
+    const arrow = active ? (esSortState.dir === 'asc' ? ' ▲' : ' ▼') : '';
+    const hasFilter = filterable && !!esColumnFilters[key];
+    const classes = [];
+    if (sortable) classes.push('sortable-th');
+    if (active) classes.push('sorted');
+    const attrs = (sortable ? ` onclick="esOnHeaderSortClick('${key}')"` : '') + (classes.length ? ` class="${classes.join(' ')}"` : '');
+    const filterBtn = filterable ? `<span class="col-filter-btn${hasFilter ? ' active' : ''}" onclick="event.stopPropagation();esToggleFilterMenu(event,'${key}')">⌄</span>` : '';
+    return `<th${attrs}>${label}<span class="sort-arrow">${arrow}</span>${filterBtn}</th>`;
+  }
+
+  function renderEsTable() {
+    let list = ALL_ES_ENTRIES.slice();
+    Object.keys(esColumnFilters).forEach(key => {
+      const f = esColumnFilters[key];
+      if (key === 'IncidentDate') {
+        list = list.filter(e => {
+          const y = (e.IncidentDate || '').slice(0, 4), m = (e.IncidentDate || '').slice(5, 7);
+          return (!f.years || f.years.has(y)) && (!f.months || f.months.has(m));
+        });
+      } else {
+        list = list.filter(e => f.has(e[key] || ''));
+      }
+    });
+    const mul = esSortState.dir === 'asc' ? 1 : -1;
+    list.sort((a, b) => {
+      const av = String(a[esSortState.key] || ''), bv = String(b[esSortState.key] || '');
+      if (av < bv) return -1 * mul;
+      if (av > bv) return 1 * mul;
+      return 0;
+    });
+
+    if (!ALL_ES_ENTRIES.length) {
       document.getElementById('esTableWrap').innerHTML = '<p class="muted">No incidents logged yet.</p>';
       return;
     }
-    const html = `<table><thead><tr><th>Date</th><th>Employee</th><th>Order</th><th>Error Class</th><th>Status</th><th>Report</th></tr></thead><tbody>` +
-      rows.map(r => `<tr>
-        <td>${escapeHtml(r.IncidentDate)}</td>
-        <td>${escapeHtml(r.EmployeeName)}</td>
+    if (!list.length) {
+      document.getElementById('esTableWrap').innerHTML = '<p class="muted">No incidents match.</p>';
+      return;
+    }
+    const html = `<table><thead><tr>${esHeaderCell_('Date', 'IncidentDate')}${esHeaderCell_('Employee', 'Agent')}` +
+      `<th>Order</th><th>Error Class</th><th>Error Tracker</th><th>Form Sent</th><th>Form Tracked</th>${esHeaderCell_('Status', 'Status')}<th>Report</th></tr></thead><tbody>` +
+      list.map(r => `<tr onclick="openEsEdit(${r.ID})" style="cursor:pointer">
+        <td style="white-space:nowrap">${escapeHtml(fmtDateLabel_(r.IncidentDate))}</td>
+        <td>${escapeHtml(r.Agent)}</td>
         <td>${escapeHtml(r.OrderID)}</td>
         <td>${escapeHtml(r.ErrorClass)}</td>
-        <td><span class="badge ${badgeClass(r.Status)}">${escapeHtml(r.Status)}</span></td>
-        <td>${r.DocLink
+        <td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" ${r.ErrorTracker ? 'checked' : ''} onchange="onEsFlagChange(${r.ID},'ErrorTracker',this)"></td>
+        <td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" ${r.FormSent ? 'checked' : ''} onchange="onEsFlagChange(${r.ID},'FormSent',this)"></td>
+        <td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" ${r.FormTracked ? 'checked' : ''} onchange="onEsFlagChange(${r.ID},'FormTracked',this)"></td>
+        <td><span class="badge ${badgeClass(r.Status)}" id="es-status-${r.ID}">${escapeHtml(r.Status)}</span></td>
+        <td onclick="event.stopPropagation()">${r.DocLink
             ? `<a class="link" href="${escapeHtml(r.DocLink)}" target="_blank">Open PDF</a>`
             : `<button class="secondary" onclick="generateDoc(${r.ID}, this)">Generate PDF</button>`}
         </td>
       </tr>`).join('') + `</tbody></table>`;
     document.getElementById('esTableWrap').innerHTML = html;
+  }
+
+  function onEsFlagChange(id, field, checkboxEl) {
+    checkboxEl.disabled = true;
+    google.script.run
+      .withSuccessHandler(res => {
+        checkboxEl.disabled = false;
+        if (res.success) {
+          const rec = ALL_ES_ENTRIES.find(e => Number(e.ID) === Number(id));
+          if (rec) { rec[field] = checkboxEl.checked ? 'Yes' : ''; rec.Status = res.status; }
+          const badge = document.getElementById('es-status-' + id);
+          if (badge) { badge.textContent = res.status; badge.className = 'badge ' + badgeClass(res.status); }
+        } else {
+          checkboxEl.checked = !checkboxEl.checked;
+          alert('Could not update: ' + res.error);
+        }
+      })
+      .withFailureHandler(err => {
+        checkboxEl.disabled = false;
+        checkboxEl.checked = !checkboxEl.checked;
+        alert('Error: ' + (err.message || err));
+      })
+      .setEsTrackerFlag(id, field, checkboxEl.checked);
   }
 
   function generateDoc(id, btnEl) {
@@ -722,7 +978,7 @@ function archiveClosedEntries() {
   function renderEsTable_(rows) {
     return `<table><thead><tr><th>Date</th><th>Order</th><th>Error Class</th><th>Feedback</th><th>Status</th></tr></thead><tbody>` +
       rows.map(r => `<tr>
-        <td>${escapeHtml(r.IncidentDate)}</td>
+        <td>${escapeHtml(fmtDateLabel_(r.IncidentDate))}</td>
         <td>${escapeHtml(r.OrderID)}</td>
         <td>${escapeHtml(r.ErrorClass)}</td>
         <td>${escapeHtml((r.Feedback||'').slice(0,140))}${(r.Feedback||'').length>140?'…':''}</td>
@@ -760,6 +1016,8 @@ function archiveClosedEntries() {
       document.getElementById('cfg_priority').value = opts.priority.join('\\n');
       document.getElementById('cfg_impact').value = opts.impact.join('\\n');
       document.getElementById('cfg_errorClass').value = opts.errorClass.join('\\n');
+      document.getElementById('cfg_position').value = (opts.position || []).join('\\n');
+      fillDatalist('positionOptions', opts.position || []);
     }).getOptions();
     google.script.run.withSuccessHandler(renderRosterTable).getEmployees();
   }
@@ -771,7 +1029,8 @@ function archiveClosedEntries() {
       status: parse('cfg_status'),
       priority: parse('cfg_priority'),
       impact: parse('cfg_impact'),
-      errorClass: parse('cfg_errorClass')
+      errorClass: parse('cfg_errorClass'),
+      position: parse('cfg_position')
     };
     google.script.run.withSuccessHandler(() => {
       document.getElementById('cfgMsg').className = 'msg ok';
@@ -792,12 +1051,41 @@ function archiveClosedEntries() {
     const cols = ['Name','RealName'].concat(MONTHS_);
     let html = '<thead><tr>' + cols.map(c => `<th>${c === 'RealName' ? 'Real Name' : c}</th>`).join('') + '<th></th></tr></thead><tbody>';
     rosterRows.forEach((row, i) => {
-      html += '<tr>' + cols.map(c =>
-        `<td><input value="${escapeHtml(row[c] || '')}" onchange="rosterRows[${i}]['${c}']=this.value"></td>`
-      ).join('') + `<td><button class="link-btn" onclick="removeRosterRow(${i})">remove</button></td></tr>`;
+      html += '<tr>' + cols.map(c => {
+        const isMonth = MONTHS_.includes(c);
+        const listAttr = isMonth ? ' list="positionOptions"' : '';
+        return `<td><input value="${escapeHtml(row[c] || '')}"${listAttr} onchange="rosterRows[${i}]['${c}']=this.value" onpaste="onRosterCellPaste(event,${i},'${c}')"></td>`;
+      }).join('') + `<td><button class="link-btn" onclick="removeRosterRow(${i})">remove</button></td></tr>`;
     });
     html += '</tbody>';
     document.getElementById('rosterTable').innerHTML = html;
+  }
+
+  // Spreadsheet-style block paste: if the clipboard has tabs/newlines (a multi-cell copy from
+  // Sheets/Excel), distribute it across cells starting at (rowIndex, colKey) instead of dumping
+  // raw TSV text into one field. Adds rows as needed. Single-value pastes fall through to the
+  // browser's normal paste behavior.
+  function onRosterCellPaste(ev, rowIndex, colKey) {
+    const text = (ev.clipboardData || window.clipboardData).getData('text');
+    if (!text || (!text.includes('\t') && !text.includes('\n'))) return;
+    ev.preventDefault();
+    const cols = ['Name','RealName'].concat(MONTHS_);
+    const startCol = cols.indexOf(colKey);
+    const lines = text.replace(/\r/g, '').split('\n').filter((line, i, arr) => !(i === arr.length - 1 && line === ''));
+    lines.forEach((line, r) => {
+      const cells = line.split('\t');
+      const targetRow = rowIndex + r;
+      while (targetRow >= rosterRows.length) {
+        const blank = {Name: '', RealName: ''};
+        MONTHS_.forEach(m => blank[m] = '');
+        rosterRows.push(blank);
+      }
+      cells.forEach((val, c) => {
+        const col = cols[startCol + c];
+        if (col) rosterRows[targetRow][col] = val.trim();
+      });
+    });
+    drawRosterTable();
   }
 
   function addRosterRow() {

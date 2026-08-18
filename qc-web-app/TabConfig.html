@@ -25,6 +25,10 @@
           <label>Error Class (ES Tracker)</label>
           <textarea id="cfg_errorClass" rows="6"></textarea>
         </div>
+        <div class="field">
+          <label>Position (Employee Roster)</label>
+          <textarea id="cfg_position" rows="6"></textarea>
+        </div>
       </div>
       <button class="primary" onclick="saveConfigOptions()">Save Options</button>
       <div id="cfgMsg" class="msg"></div>
@@ -35,10 +39,11 @@
         <h2 style="margin:0">Employee Roster</h2>
         <button class="secondary" onclick="addRosterRow()">+ Add Employee</button>
       </div>
-      <p class="muted">Name is the alias used everywhere else (Coaching entries, ES Tracker, etc). Position can differ by month — edit any month's cell directly.</p>
+      <p class="muted">Name is the alias used everywhere else (Coaching entries, ES Tracker, etc). Position can differ by month — edit any month's cell directly, or copy/paste a block straight from a spreadsheet (select a range in Sheets, copy, click a cell here, paste — it fills across and adds rows as needed).</p>
       <div style="overflow-x:auto">
         <table class="config-table" id="rosterTable"></table>
       </div>
+      <datalist id="positionOptions"></datalist>
       <button class="primary" style="margin-top:12px" onclick="saveRoster()">Save Roster</button>
       <div id="rosterMsg" class="msg"></div>
     </div>

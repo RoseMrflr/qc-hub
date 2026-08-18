@@ -18,19 +18,22 @@ const IR_OUTPUT_FOLDER_ID = '1Y3doSwJzO0XW30BP8Pu-kPGiVzNPWfuX';
 
 const MASTER_HEADERS = ['ID','Date','Type','Topic','Person','Details','Issues','GoalsActionItems','DueDate','Status','Priority','Link','CreatedAt','Archived'];
 const ES_HEADERS = ['ID','Agent','EmployeeName','Position','OrderID','IncidentDate','ImpactLevel','ErrorClass',
-  'ErrorCategory','SanctionType','ViolationCategory','Client','Feedback','RootCause','Status','DocLink','CreatedAt'];
+  'ErrorCategory','SanctionType','ViolationCategory','Client','Feedback','RootCause',
+  'ErrorTracker','FormSent','FormTracked','Status','DocLink','CreatedAt'];
+const ES_FLAG_FIELDS = ['ErrorTracker','FormSent','FormTracked'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const EMPLOYEE_HEADERS = ['Name','RealName'].concat(MONTHS);
-const CONFIG_COLUMNS = ['Type Options','Status Options','Priority Options','Impact Level','Error Class'];
+const CONFIG_COLUMNS = ['Type Options','Status Options','Priority Options','Impact Level','Error Class','Position Options'];
 
 const DEFAULT_TYPE_OPTIONS = ['Coaching','Observation','Clarification','Project','Calibration','Training','Huddle','Meeting','Admin Task','FGD / Escalation','Client Dispute','Audit','Other'];
 const DEFAULT_STATUS_OPTIONS = ['Open','In Progress','Pending','Completed','Done','Closed'];
 const DEFAULT_PRIORITY_OPTIONS = ['High','Medium','Low'];
 const DEFAULT_IMPACT_OPTIONS = ['High','Medium','Low'];
 const DEFAULT_ERRORCLASS_OPTIONS = ['Critical Error','Cleint Dispute','Quality / Operational Error','Minor Error','Major Error'];
+const DEFAULT_POSITION_OPTIONS = ['TM','TWC','QC','L1','L2','L3','T1','T2','T3','Trainer','Trainee','TS'];
 
 const MASTER_LOG_SEED = [["1","2025-07-30","Coaching","Performance","Ron","Agenda/Topics: Check DNF, Quiz, Attendance (Punctuality, Overtime) - Done\nJump in Approvals when ops is in meeting\nInvest on backup devices (ask one by one)\nOT Reminder; be mindful of tagging. - Done\nAsk topic for calib\n\nIssues/Concerns: Why do you think productivity is reduced during auditor\nDebtor name, expiration, Juris --- make the handover accurate and complete\nBe more flexible in handling handovers - NJ\n\nCommendable: Good job on stepping in on QA / Approvals\nProactively sharing screen to support agents\nPunctual\nContinued support on confe calls\n\nGoals/Action Items: Goal: Increase Productivity","","","2026-07-27","Completed","","","2026-08-13T20:58:29.797624",""],["2","2026-07-03","FGD / Escalation","Scoreform Discussion","Rosie","Agenda/Topics: Score Form Discussion.pptx","","","2026-07-03","Completed","","Recap: Team SR 2026 July, 3 | Meeting | Microsoft Teams","2026-08-13T20:58:29.797624",""],["3","2026-07-06","Admin Task","ARE: 132805","Jarence","","","","2026-07-06","Completed","","","2026-08-13T20:58:29.797624",""],["4","2026-07-07","Huddle","Huddle","Auditors","Agenda/Topics: Welcome new L2, Goals\nSheet, Feedback, Prioritization,  Auditor as Approver\n\nGoals/Action Items: FL GS - GS Handover - Done\nFolder for Paid Copies - (Especially in Ficoso) para hindi ulit ulit yung copies - Done | Find in Completed\nBP Counting notification - Done; informed auditor\nReassigned Audit Notification - Done by TM/TL H\nDati natunog pag natapos na si agent Notification - Done by TM/TL H\n\nPrioritization:  Sabay sabay e prio - Bella county results\n                Nabibigyan ng order - From agent \n                Prio Agent > Auditor – nanonotif ang auditor pag may completed - Done by TM/TL H\n","","","2026-07-07","Completed","","L2 Huddles","2026-08-13T20:58:29.797624",""],["5","2026-07-08","Cleint Dispute","129727.0","Janet","Agenda/Topics: b. Major Error - x. Results Listing/s\n\nIssues/Concerns: Client-Reported Error\n\nGoals/Action Items: Final Written Warning","","","","Closed","High","","2026-08-13T20:58:29.797624",""],["6","2026-07-08","Cleint Dispute","129727.0","James","Agenda/Topics: b. Major Error - x. Results Listing/s\n\nIssues/Concerns: Client-Reported Error\n\nGoals/Action Items: Final Written Warning","","","","Closed","High","","2026-08-13T20:58:29.797624",""],["7","2026-07-09","Coaching","","Janelle","Issues/Concerns: Template should be first\nDo not put names on recycled templates\nIn double checking, file name should be equals to Debtor name","","","2026-07-09","Completed","","","2026-08-13T20:58:29.797624",""],["8","2026-07-09","Admin Task","ARE: Mike","Mike","","","","2026-07-09","Completed","","","2026-08-13T20:58:29.797624",""],["9","2026-07-10","Calibration","Through Date Upates Discussion","Janet","Agenda/Topics: Through Date & FC Updates​ Discussion.pptx\n\nGoals/Action Items: Guru / Sheet for State Holiday\nTo Jen: approval if we can use through date for both state and FC - Follow-up Sent\nTD Source in unified listings - Done","","","2026-07-03","Completed","","Recap: Team SR 2026 July, 10 | Meeting | Microsoft Teams","2026-08-13T20:58:29.797624",""],["10","2026-07-10","Admin Task","Montly Report","Ops","","","","2026-07-10","Completed","","","2026-08-13T20:58:29.797624",""],["11","2026-07-10","Admin Task","Through Date Upates Discussion","Team","","","","2026-07-10","Completed","","","2026-08-13T20:58:29.797624",""],["12","2026-07-13","Project","Handover Template","Me","Agenda/Topics: QA/Audit\n\nGoals/Action Items: Latest update: Added TD Source","","","","Completed","High","SR - HO Listing Template","2026-08-13T20:58:29.797624",""],["13","2026-07-15","Quality / Operational Error","132431.0","James","Agenda/Topics: PROFESSIONAL CONDUCT & WORKPLACE STANDARDS\nQuality & Performance Standards\nIncorrect guidance or review decision resulting in a critical error\n\nIssues/Concerns: Error Sanctions\n\nGoals/Action Items: Written Warning","","","","Closed","Medium","","2026-08-13T20:58:29.797624",""],["14","2026-07-17","Admin Task","Order Modification List | Order Modifications","Upper Ops","","","","2026-07-17","Completed","","","2026-08-13T20:58:29.797624",""],["15","2026-07-21","Clarification","134633.0","","Agenda/Topics: If FL Recorder is 10 years","","","","Open","High","","2026-08-13T20:58:29.797624",""],["16","2026-07-21","Clarification","Indexing vs Content","","Agenda/Topics: Indexing vs Content","","","","Open","High","","2026-08-13T20:58:29.797624",""],["17","2026-07-22","Clarification","125445.0","","Agenda/Topics: If hit or note","","","","Open","High","","2026-08-13T20:58:29.797624",""],["18","2026-07-23","Coaching","Will Issue\nCommittment\nPerformance","Florence","Agenda/Topics: I wanted to have this conversation because I believe you deserve to know where you stand. Right now, your performance is at a point where immediate and consistent improvement is needed. If things continue as they are, there could be serious consequences, including the possibility of losing your role. My goal is to help you avoid that, and I'm committed to supporting you.\n\nIssues/Concerns: Speed is unexplainable; started wiht bio breaks (it's not fair)\nAsk if works wiht other company\nOther workmates are depressed too (Pete and Benj)\nRemind her she's in recalibration notice\nViolation: bio break 16min saka pending task 11min - 07/23/2026\nDelayed Submission: NR 134727\nSuper Delayed Submission: Important - 133374","","","2026-07-24","Completed","","","2026-08-13T20:58:29.797624",""],["19","2026-07-24","Coaching","Performance","Florence","Agenda/Topics: Check DNF, Quiz, Attendance (Punctuality, Overtime)\nJump in Approvals when ops is in meeting\nInvest on backup devices (ask one by one)\nOT Reminder; be mindful of tagging. \n\nIssues/Concerns: 133854 TX - tagal\n134024 - GA - tagal\nZoning out\nAttendance: 07/07/2026 - Late 17 minutes\nAttendance: 07/09/2026 - Late 10 minutes; unresponsive\nSleeping\n\nCommendable: Good job on stepping in on QA / Approvals\n\n\nGoals/Action Items: Fix tagging (133854, 134024) & OT tagging\nAvoid late/unresponsive (7/7, 7/9)\nStay focused, avoid zoning out\nComplete DNF/Quiz/Attendance checks\nKeep up good QA/Approvals work\nPrepare backup device","","","2026-07-15","Completed","","","2026-08-13T20:58:29.797624",""],["20","2026-07-24","Calibration","FC, NJ IO Sequence, Ways of Searches","Rosie, Janet","Agenda/Topics: Calibration - July 24, 2026.pptx","","","2026-07-24","Completed","","Recap: Team SR 2026 July, 24 | Meeting | Microsoft Teams","2026-08-13T20:58:29.797624",""],["21","2026-07-24","Admin Task","Guru / Sheet for State Holiday\nTo Jen: approval if we can use through date for both state and FC","Upper Ops","","","","2026-07-24","In Progress","","","2026-08-13T20:58:29.797624",""],["22","2026-07-24","Admin Task","Coding: Guidelines; Training and Development","Team","","","","2026-07-24","Open","","","2026-08-13T20:58:29.797624",""],["23","2026-07-24","Admin Task","UCC Guru Card to mirror what's in the app","Rosie / Janet","","","","2026-07-24","Open","","","2026-08-13T20:58:29.797624",""],["24","2026-07-28","Coaching","Performance\nPrev: Goal Improve Speed in Review and PAS Time. Avoid errors.","Becky","Agenda/Topics: Check DNF, Quiz, Attendance (Punctuality, Overtime)\nJump in Approvals when ops is in meeting\nInvest on backup devices (ask one by one)\nOT Reminder; be mindful of tagging. \n\nCommendable: Good job on stepping in on QA / Approvals - GJ\nOvertime rendered\nPunctual\nMore Exposure sa UF\n\nGoals/Action Items: Goal is to become a leader she is the next in line","","","2026-07-16","Completed","","","2026-08-13T20:58:29.797624",""],["25","2026-07-29","Coaching","Performance\nMusta ang gala\nPrev: 100% error-free reviewed report, 0 disputes, 15-20% increase in productivity in terms of reviewed SFC than in previous month","Jeselle","Agenda/Topics: Check DNF, Quiz, Attendance (Punctuality, Overtime) - Done\nJump in Approvals when ops is in meeting\nInvest on backup devices (ask one by one) - Done\nOT Reminder; be mindful of tagging.  - Done\nAsk topic for calib \n\nIssues/Concerns: Sad, namatayan din\nDecline in Productivity\n\nCommendable: Good obsevation inputs during huddle - Done\nGood job on stepping in on QA / Approvals - Done\nPunctual - Done\n\nGoals/Action Items: Status of old goal:\nPrev: 100% error-free reviewed report - met \n0 disputes,  - met \n15-20% increase in productivity in terms of reviewed SFC than in previous month - goal again\ndapat di mkapasok ang TLs sa top tank gn auditors","","","","Open","","","2026-08-13T20:58:29.797624",""],["26","2026-07-31","Coaching","Performance\n2k accuracy points","Jia","Agenda/Topics: Check DNF, Quiz, Attendance (Punctuality, Overtime) - Done\nJump in Approvals when ops is in meeting - Done\nInvest on backup devices (ask one by one) - Done\nOT Reminder; be mindful of tagging. - Done\nAsk topic for calib\n\nIssues/Concerns: Kumustahin ang well-being\n\nCommendable: Good job on stepping in on QA / Approvals - GJ - Done\nPunctual - Done\nMore Exposure sa UF - Done\nCharm, good approach always sa agent - Done\nImportant - 133374 - excessive - Done\nPerformance: highest DS - Done\n\nGoals/Action Items: Next goal: \n\nExposure sa role ng L2. \n3 approvals per day. \nProductivity. \nTripple reviews\nAbove average ","","","","Completed","","","2026-08-13T20:58:29.797624",""],["27","2026-07-31","Coaching","","Agents","Issues/Concerns: Aways start in PDF converter\nRIght click nsert copied cell","","","","Open","","","2026-08-13T20:58:29.797624",""],["28","2026-07-31","Meeting","","Ops","Issues/Concerns: Auditor: Lower SFC since the agents they handle has lower SFc too sicne they are T2, they do not work on difficult orders yet - Done\nBecky's DNF - with File 132233","","","","Open","","","2026-08-13T20:58:29.797624",""],["29","2026-08-01","Huddle","Huddle","Auditors","Issues/Concerns: In porgress - make it complete\nAsk topic for calib\nRemind the use of DS - in-house filings\n\nCommendable: Agent Approach","","","","Open","","","2026-08-13T20:58:29.797624",""],["30","2026-08-01","Admin Task","Clarify 132805; hindi ginalaw ni flor pero nakta nya ang error\nNJ Courts sequence","Ops","","","","2026-08-01","Open","","","2026-08-13T20:58:29.797624",""],["31","2026-08-07","Huddle","Assure na hindi kasalanan na wala si Tara","Jia","","","","","Open","","","2026-08-13T20:58:29.797624",""],["32","2026-08-15","Coaching","Performance\nDiscuss to do good because Appraisal is nearing\nTarget: 200 DS per day","Florence","","","","","Open","","","2026-08-13T20:58:29.797624",""],["33","2026-08-17","Coaching","","Florence","Issues/Concerns: Just 1 blunder would risk her termination","","","","Open","","","2026-08-13T20:58:29.797624",""],["34","2026-08-19","Coaching","","Becky","Commendable: July third week inJuly -  stepping up","","","","Open","","","2026-08-13T20:58:29.797624",""],["35","","Project","Training Master Sheet","Me","Agenda/Topics: Training","","","","In Progress","Medium","Training Master Sheet\n","2026-08-13T20:58:29.797624",""],["36","2026-07-21","Clarification","If FL Recorder is 10 years","","Question to Client: If FL Recorder is 10 years","","","","Open","","","2026-08-13T20:58:29.797624",""],["37","2026-07-22","Clarification","CT Municipal","","Question to Client: If hit or note","","","","Open","","","2026-08-13T20:58:29.797624",""],["38","2026-07-31","Clarification","Open case with Stipulation of dismissal","","Question to Client: If hit or note or HWAN","","","","Open","","","2026-08-13T20:58:29.797624",""],["39","","Project","Handover Template","Me","Category: QA/Audit | Notes: Modify With Error form","","","","Active","High","SR - HO Listing Template","2026-08-13T20:58:29.797624",""],["40","","Project","Sheet for Approval Guide","","Category: Other","","","","Active","","","2026-08-13T20:58:29.797624",""],["41","2026-07-31","Calibration","TD: onsite, same date; Error Scoring, No need FC, MA District Court, NC Cert, MI UCC","Rosie, Jia, Janet","Materials: Calibration - July 31, 2026.pptx","","","","Done","","Recap: Team SR 2026 July, 31 | Meeting | Microsoft Teams","2026-08-13T20:58:29.797624",""],["42","","Audit","Order 136810 flagged by Mike (ARE)","Florence","","","","","Pending","","","2026-08-13T20:58:29.797624",""]];
-const ES_TRACKER_SEED = [[1, "Janet", "Javelin C. Belocura", "Trainer and Workforce Coordinator", 129727, "2026-07-08", "High", "Cleint Dispute", "b. Major Error - x. Results Listing/s", "Final Written Warning", "Client-Reported Error", "GREGORY M. SWEENEY, JR., D.M.D., P.C.", "Missing results:\nB 13-7084445 FS and its UCC3s\nB 14-7361661 FS and its UCC3s\nB 20-7246767 FS and its UCC3", "This incident was caused by not utilizing all available search logic, resulting in missed filings.", "Completed", "https://drive.google.com/file/d/1xpTjj9ZZuXiQGNHEY_QhpgO5A-bC7veL/view?usp=drivesdk", ""], [2, "James", "James Brylle Dagasdas Limbauan", "L3 Auditor / Team Leader", 129727, "2026-07-08", "High", "Cleint Dispute", "b. Major Error - x. Results Listing/s", "Final Written Warning", "Client-Reported Error", "GREGORY M. SWEENEY, JR., D.M.D., P.C.", "Missing results:\nB 13-7084445 FS and its UCC3s\nB 14-7361661 FS and its UCC3s\nB 20-7246767 FS and its UCC3", "This incident was caused by not utilizing all available search logic, resulting in missed filings.", "Completed", "https://drive.google.com/file/d/1zRc4oLV1MC1LLi6Z4z-tLNXmhh1W8_Zj/view?usp=drivesdk", ""], [3, "James", "James Brylle Dagasdas Limbauan", "L3 Auditor / Team Leader", 132431, "2026-07-15", "Medium", "Quality / Operational Error", "PROFESSIONAL CONDUCT & WORKPLACE STANDARDS Quality & Performance Standards Incorrect guidance or review decision resulting in a critical error", "Written Warning", "Error Sanctions", "FT Assets LLC", "Incorrect Results Note: \"See attached\" was entered instead of \"See attached certified search.\" Incorrect Through Date (per indexing office): May 22, 2026 was entered instead of July 10, 2026. Missing Document Attachment (1/1): UCC Certificate Listing for FT Assets LLC was not attached.", "Incorrect guidance was provided to the agent despite the availability of documented guidance in the General channel and the calibration session discussion.", "Completed", "https://drive.google.com/file/d/1hBUomxpn90jlpzOZWmSwgjo6aR6NozzL/view?usp=drivesdk", ""], [4, "Mike", "Mike John Asumbrado", "T3 Agent", 135640, "2026-07-31", "High", "Critical Error", "c. Critical Error - iii. No Results Found", "Final Written Warning", "Error Sanctions", "Andrew P. Kontos", "Lee County, FL County Combo – Recorder. Score & Feedback: 80 - Reported \"No results found\", when there is a Final Judgment result # 2014000161319.", "", "Completed", "https://drive.google.com/file/d/1jfbySGpRJTd83IoTFFbgp1HBwXQ9MKH8/view?usp=drivesdk", ""], [5, "Jarence", "Jarence Jae Taduran Javier", "L1 Auditor", 135488, "2026-08-03", "High", "Cleint Dispute", "a. Minor Error - ii. Formatting (Including Matrix Errors)", "Final Written Warning", "Error Sanctions", "Llano Estacado Properties, LLC", "A lapse date was incorrectly entered for Transmitting Utility UCC No. 20240000009512. The lapse date should be left blank.", "", "Completed", "https://drive.google.com/file/d/1Tt2lAV5vs9UvmnDvXG77CeD-6cSupOto/view?usp=drivesdk", ""], [6, "Jarence", "Jarence Jae Taduran Javier", "L1 Auditor", 132805, "2026-07-06", "High", "Critical Error", "c. Critical Error - i. Debtor/Party Searched", "Final Written Warning", "Error Sanctions", "Milne Aseptics LLC", "Score & Feedback: Score: 80.00 - WA, Dept of Licensing - Incorrect Debtor/Party Searched (CE): Wrote Milne Fruit Products, Inc. instead of Milne Aseptics LLC", "WE Juris, IO: WA, Dept of Licensing. WE SFC: 1. WE SPD: 7", "Completed", "https://drive.google.com/file/d/1M56sEouviG_A2OcnoHPaBfPQLEKLN8NC/view?usp=drivesdk", ""], [7, "Becky", "Quennie Mae Quintana Pamisa", "L2 Auditor", 136354, "2026-08-09", "High", "Cleint Dispute", "b. Major Error - xi. Results Note", "Final Written Warning", "Error Sanctions", "WABILOGIC INC.", "Incorrect results note for NV SOS. It should state, \"See attached certified search – no results found,\" instead of \"No results found.\"", "The certificate was attached and cost included in feedback, but the results note was not updated.", "In Progress", "https://drive.google.com/file/d/128PB2qpebtkzHFF2hD4WRm2aLBPTGB4v/view?usp=drivesdk", ""]];
+const ES_TRACKER_SEED = [[1,"Janet","Javelin C. Belocura","Trainer and Workforce Coordinator",129727,"2026-07-08","High","Cleint Dispute","b. Major Error - x. Results Listing/s","Final Written Warning","Client-Reported Error","GREGORY M. SWEENEY, JR., D.M.D., P.C.","Missing results:\nB 13-7084445 FS and its UCC3s\nB 14-7361661 FS and its UCC3s\nB 20-7246767 FS and its UCC3","This incident was caused by not utilizing all available search logic, resulting in missed filings.","","","","Completed","https://drive.google.com/file/d/1xpTjj9ZZuXiQGNHEY_QhpgO5A-bC7veL/view?usp=drivesdk",""],[2,"James","James Brylle Dagasdas Limbauan","L3 Auditor / Team Leader",129727,"2026-07-08","High","Cleint Dispute","b. Major Error - x. Results Listing/s","Final Written Warning","Client-Reported Error","GREGORY M. SWEENEY, JR., D.M.D., P.C.","Missing results:\nB 13-7084445 FS and its UCC3s\nB 14-7361661 FS and its UCC3s\nB 20-7246767 FS and its UCC3","This incident was caused by not utilizing all available search logic, resulting in missed filings.","","","","Completed","https://drive.google.com/file/d/1zRc4oLV1MC1LLi6Z4z-tLNXmhh1W8_Zj/view?usp=drivesdk",""],[3,"James","James Brylle Dagasdas Limbauan","L3 Auditor / Team Leader",132431,"2026-07-15","Medium","Quality / Operational Error","PROFESSIONAL CONDUCT & WORKPLACE STANDARDS Quality & Performance Standards Incorrect guidance or review decision resulting in a critical error","Written Warning","Error Sanctions","FT Assets LLC","Incorrect Results Note: \"See attached\" was entered instead of \"See attached certified search.\" Incorrect Through Date (per indexing office): May 22, 2026 was entered instead of July 10, 2026. Missing Document Attachment (1/1): UCC Certificate Listing for FT Assets LLC was not attached.","Incorrect guidance was provided to the agent despite the availability of documented guidance in the General channel and the calibration session discussion.","","","","Completed","https://drive.google.com/file/d/1hBUomxpn90jlpzOZWmSwgjo6aR6NozzL/view?usp=drivesdk",""],[4,"Mike","Mike John Asumbrado","T3 Agent",135640,"2026-07-31","High","Critical Error","c. Critical Error - iii. No Results Found","Final Written Warning","Error Sanctions","Andrew P. Kontos","Lee County, FL County Combo – Recorder. Score & Feedback: 80 - Reported \"No results found\", when there is a Final Judgment result # 2014000161319.","","","","","Completed","https://drive.google.com/file/d/1jfbySGpRJTd83IoTFFbgp1HBwXQ9MKH8/view?usp=drivesdk",""],[5,"Jarence","Jarence Jae Taduran Javier","L1 Auditor",135488,"2026-08-03","High","Cleint Dispute","a. Minor Error - ii. Formatting (Including Matrix Errors)","Final Written Warning","Error Sanctions","Llano Estacado Properties, LLC","A lapse date was incorrectly entered for Transmitting Utility UCC No. 20240000009512. The lapse date should be left blank.","","","","","Completed","https://drive.google.com/file/d/1Tt2lAV5vs9UvmnDvXG77CeD-6cSupOto/view?usp=drivesdk",""],[6,"Jarence","Jarence Jae Taduran Javier","L1 Auditor",132805,"2026-07-06","High","Critical Error","c. Critical Error - i. Debtor/Party Searched","Final Written Warning","Error Sanctions","Milne Aseptics LLC","Score & Feedback: Score: 80.00 - WA, Dept of Licensing - Incorrect Debtor/Party Searched (CE): Wrote Milne Fruit Products, Inc. instead of Milne Aseptics LLC","WE Juris, IO: WA, Dept of Licensing. WE SFC: 1. WE SPD: 7","","","","Completed","https://drive.google.com/file/d/1M56sEouviG_A2OcnoHPaBfPQLEKLN8NC/view?usp=drivesdk",""],[7,"Becky","Quennie Mae Quintana Pamisa","L2 Auditor",136354,"2026-08-09","High","Cleint Dispute","b. Major Error - xi. Results Note","Final Written Warning","Error Sanctions","WABILOGIC INC.","Incorrect results note for NV SOS. It should state, \"See attached certified search – no results found,\" instead of \"No results found.\"","The certificate was attached and cost included in feedback, but the results note was not updated.","","","","In Progress","https://drive.google.com/file/d/128PB2qpebtkzHFF2hD4WRm2aLBPTGB4v/view?usp=drivesdk",""]];
 const EMPLOYEES_SEED = [["Lizzy", "Mary Luz Taño - Rico", "TM", "TM", "TM", "TM", "TM", "TM", "TM", "TM", "TM", "TM", "TM"], ["Keith", "Kenneth Lance Dela Cruz Cataquiz", "L3", "TS", "TS", "TS", "TS", "TS", "TS", "TS", "TS", "TS", "TS"], ["Rosie", "Rose Manalipon Miraflor", "L3", "QC", "QC", "QC", "QC", "QC", "QC", "QC", "QC", "QC", "QC"], ["Janet", "Javelin C. Belocura", "TWC", "TWC", "TWC", "TWC", "TWC", "TWC", "TWC", "TWC", "TWC", "TWC", "TWC"], ["Florence", "Floremy Ann Coral Sambrano", "L2", "L2", "L2", "L2", "L2", "L2", "L2", "T3", "", "", ""], ["Joan", "Joanne Dimaculangan De Villa", "T3", "T3", "L1", "T3", "Trainer", "Trainer", "T3", "T3", "", "", ""], ["Becky", "Quennie Mae Quintana Pamisa", "L2", "L2", "L2", "L2", "L2", "L2", "L2", "L2", "", "", ""], ["Henschel", "Henschel Rous Sunga Perez", "L2", "L3", "L3", "L3", "L3", "L3", "L3", "L3", "L3", "L3", "L3"], ["James", "James Brylle Dagasdas Limbauan", "L1", "L3", "L3", "L3", "L3", "L3", "L3", "L3", "L3", "L3", "L3"], ["Jarence", "Jarence Jae Taduran Javier", "T3", "T3", "L1", "L1", "T3", "T3", "L1", "L1", "", "", ""], ["Jeselle", "Jeselle Indiano", "L1", "L2", "L2", "L2", "L2", "L2", "L2", "L2", "", "", ""], ["Jia", "Benjie S. Arnidoval", "T3", "L1", "T3", "L1", "L1", "L2", "L2", "L2", "", "", ""], ["Pete", "Peter D. Balabagno", "T3", "L1", "T3", "T3", "L1", "T3", "L1", "L1", "", "", ""], ["Ron", "Shin Ray S. Acorda", "T3", "T3", "L1", "L1", "T3", "L1", "L2", "", "", "", ""], ["Mike", "Mike John Asumbrado", "Trainee", "T2", "T2", "T2", "T2", "T2", "T3", "T3", "", "", ""], ["Simon", "Simon Peter Raposas", "Trainee", "T2", "T2", "T2", "T2", "T2", "T3", "", "", "", ""], ["Wenyel", "Wenyel Anne Martinez Vidanes", "T3", "T3", "T3", "L3", "L1", "L1", "L1", "", "", "", ""], ["Annie", "Anne Jhasmine Gonzales Galang", "", "Trainee", "Trainee", "Trainee", "T2", "T2", "T1", "", "", "", ""], ["Janelle", "Janna Lea Rodriguez De Torres", "", "", "", "", "Trainee", "Trainee", "T1", "", "", "", ""], ["Gabe", "Matthew Gabriel Carpio", "", "", "", "", "Trainee", "Trainee", "T1", "", "", "", ""]];
 
 // ---------- SETUP (runs automatically on first load) ----------
@@ -53,6 +56,7 @@ function ensureSetup_() {
     ES_TRACKER_SEED.forEach(row => es.appendRow(row));
     es.setFrozenRows(1);
   }
+  migrateEsTrackerFlags_(es);
   let emp = SS.getSheetByName(EMPLOYEES_SHEET_NAME);
   if (!emp) {
     emp = SS.insertSheet(EMPLOYEES_SHEET_NAME);
@@ -66,12 +70,13 @@ function ensureSetup_() {
     cfg = SS.insertSheet(CONFIG_SHEET_NAME);
     cfg.appendRow(CONFIG_COLUMNS);
     cfg.getRange(1, 1, 1, CONFIG_COLUMNS.length).setFontWeight('bold');
-    const lists = [DEFAULT_TYPE_OPTIONS, DEFAULT_STATUS_OPTIONS, DEFAULT_PRIORITY_OPTIONS, DEFAULT_IMPACT_OPTIONS, DEFAULT_ERRORCLASS_OPTIONS];
+    const lists = [DEFAULT_TYPE_OPTIONS, DEFAULT_STATUS_OPTIONS, DEFAULT_PRIORITY_OPTIONS, DEFAULT_IMPACT_OPTIONS, DEFAULT_ERRORCLASS_OPTIONS, DEFAULT_POSITION_OPTIONS];
     const maxLen = Math.max(...lists.map(l => l.length));
     for (let i = 0; i < maxLen; i++) {
       cfg.appendRow(lists.map(l => l[i] || ''));
     }
   }
+  migrateConfigColumns_(cfg);
   const def = SS.getSheetByName('Sheet1');
   if (def && def.getLastRow() === 0 && SS.getSheets().length > 1) {
     SS.deleteSheet(def);
@@ -115,6 +120,38 @@ function migrateArchivedColumn_(sheet) {
   target.setFontWeight('bold').setBackground('#2F5597').setFontColor('#ffffff');
 }
 
+// One-time, idempotent migration: appends a 'Position Options' column to an already-existing
+// Config sheet, pre-seeded with the default position list. No-ops once already present.
+function migrateConfigColumns_(sheet) {
+  sheet = sheet || SS.getSheetByName(CONFIG_SHEET_NAME);
+  if (!sheet) return;
+  const lastCol = sheet.getLastColumn();
+  const currentHeaders = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+  if (currentHeaders.indexOf('Position Options') !== -1) return; // already migrated
+  const startCol = (lastCol || 0) + 1;
+  sheet.getRange(1, startCol, 1, 1).setValues([['Position Options']]).setFontWeight('bold');
+  if (DEFAULT_POSITION_OPTIONS.length) {
+    sheet.getRange(2, startCol, DEFAULT_POSITION_OPTIONS.length, 1).setValues(DEFAULT_POSITION_OPTIONS.map(v => [v]));
+  }
+}
+
+// One-time, idempotent migration: inserts the ErrorTracker/FormSent/FormTracked checkbox
+// columns into an already-existing ES Tracker sheet (right before 'Status'), shifting Status/
+// DocLink/CreatedAt right and preserving all existing data. No-ops once already present.
+function migrateEsTrackerFlags_(sheet) {
+  sheet = sheet || SS.getSheetByName(ES_SHEET_NAME);
+  if (!sheet) return;
+  const lastCol = sheet.getLastColumn();
+  const currentHeaders = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+  if (currentHeaders.indexOf('ErrorTracker') !== -1) return; // already migrated
+  const statusIdx = currentHeaders.indexOf('Status'); // 0-based
+  const insertAt = statusIdx > -1 ? statusIdx + 1 : (lastCol || 0) + 1;
+  sheet.insertColumnsBefore(insertAt, 3);
+  const target = sheet.getRange(1, insertAt, 1, 3);
+  target.setValues([ES_FLAG_FIELDS]);
+  target.setFontWeight('bold').setBackground('#C0392B').setFontColor('#ffffff');
+}
+
 // ---------- WEB APP ENTRY ----------
 function doGet(e) {
   ensureSetup_();
@@ -144,7 +181,8 @@ function getOptions() {
     status: readConfigColumn_(1),
     priority: readConfigColumn_(2),
     impact: readConfigColumn_(3),
-    errorClass: readConfigColumn_(4)
+    errorClass: readConfigColumn_(4),
+    position: readConfigColumn_(5)
   };
 }
 
@@ -153,7 +191,7 @@ function saveOptions(lists) {
   const cfg = SS.getSheetByName(CONFIG_SHEET_NAME);
   const lastRow = cfg.getLastRow();
   if (lastRow > 1) cfg.getRange(2, 1, lastRow - 1, CONFIG_COLUMNS.length).clearContent();
-  const cols = [lists.type || [], lists.status || [], lists.priority || [], lists.impact || [], lists.errorClass || []];
+  const cols = [lists.type || [], lists.status || [], lists.priority || [], lists.impact || [], lists.errorClass || [], lists.position || []];
   const maxLen = Math.max(1, ...cols.map(l => l.length));
   const out = [];
   for (let i = 0; i < maxLen; i++) out.push(cols.map(l => l[i] || ''));
@@ -389,10 +427,68 @@ function addEsTrackerEntry(entry) {
     if (h === 'ID') return nextId;
     if (h === 'CreatedAt') return now;
     if (h === 'DocLink') return '';
+    if (h === 'Status') return 'Open';
+    if (ES_FLAG_FIELDS.indexOf(h) !== -1) return '';
     return entry[h] || '';
   });
   sheet.appendRow(row);
   return { success: true, id: nextId };
+}
+
+// Toggles one of the ErrorTracker/FormSent/FormTracked checkboxes and recomputes Status:
+// 'Open' while none are checked, 'In Progress' while some (not all) are checked,
+// 'Completed' once all three are checked.
+function setEsTrackerFlag(id, field, checked) {
+  ensureSetup_();
+  if (ES_FLAG_FIELDS.indexOf(field) === -1) return { success: false, error: 'Unknown field' };
+  const sheet = SS.getSheetByName(ES_SHEET_NAME);
+  const entries = sheetToObjects_(sheet, ES_HEADERS);
+  const idx = entries.findIndex(e => Number(e.ID) === Number(id));
+  if (idx === -1) return { success: false, error: 'ES Tracker entry not found' };
+
+  const record = entries[idx];
+  record[field] = checked ? 'Yes' : '';
+  const checkedCount = ES_FLAG_FIELDS.filter(f => !!record[f]).length;
+  record.Status = checkedCount === 0 ? 'Open' : (checkedCount === ES_FLAG_FIELDS.length ? 'Completed' : 'In Progress');
+
+  const rowIndex = idx + 2;
+  sheet.getRange(rowIndex, ES_HEADERS.indexOf(field) + 1).setValue(record[field]);
+  sheet.getRange(rowIndex, ES_HEADERS.indexOf('Status') + 1).setValue(record.Status);
+  return { success: true, status: record.Status };
+}
+
+// Full inline-edit save: updates the descriptive fields of an existing ES Tracker row by ID.
+// ID, CreatedAt, DocLink, the tracker checkboxes, and Status are never touched here — those are
+// only ever changed via setEsTrackerFlag (checkboxes drive Status) or createIncidentDoc (DocLink).
+function updateEsTrackerEntry(entry) {
+  ensureSetup_();
+  const sheet = SS.getSheetByName(ES_SHEET_NAME);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { success: false, error: 'No entries yet' };
+  const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+  const idx = ids.findIndex(v => Number(v) === Number(entry.ID));
+  if (idx === -1) return { success: false, error: 'Entry not found' };
+  const rowNum = idx + 2;
+  const current = sheet.getRange(rowNum, 1, 1, ES_HEADERS.length).getValues()[0];
+  const locked = ['ID', 'CreatedAt', 'DocLink', 'Status'].concat(ES_FLAG_FIELDS);
+  ES_HEADERS.forEach((h, i) => {
+    if (locked.indexOf(h) !== -1) return;
+    if (entry[h] !== undefined) current[i] = entry[h];
+  });
+  sheet.getRange(rowNum, 1, 1, ES_HEADERS.length).setValues([current]);
+  return { success: true };
+}
+
+function deleteEsTrackerEntry(id) {
+  ensureSetup_();
+  const sheet = SS.getSheetByName(ES_SHEET_NAME);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { success: false, error: 'No entries yet' };
+  const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+  const idx = ids.findIndex(v => Number(v) === Number(id));
+  if (idx === -1) return { success: false, error: 'Entry not found' };
+  sheet.deleteRow(idx + 2);
+  return { success: true };
 }
 
 // ---------- DOC CREATOR (Incident Report PDF from ES Tracker, filled from a Doc template) ----------

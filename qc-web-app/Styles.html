@@ -90,6 +90,17 @@ a.link{color:var(--primary);}
 .cal-nav-btn{background:var(--bg);border:1px solid var(--border);color:var(--text);width:22px;height:22px;border-radius:5px;cursor:pointer;font-size:13px;line-height:1;}
 .cal-nav-btn:hover{background:var(--border);}
 #calMonthLabel{min-width:82px;text-align:center;font-weight:600;font-size:12px;color:var(--text);display:inline-block;}
+.es-split{display:flex;gap:16px;align-items:flex-start;}
+.es-split>.card{min-width:0;margin-bottom:0;}
+.es-split-log{flex:0 0 540px;max-width:540px;}
+.es-split-tracker{flex:1;min-width:0;overflow-x:auto;}
+.es-split-tracker #esTableWrap{max-height:min(640px,calc(100vh - 260px));overflow-y:auto;}
+.es-split-tracker #esTableWrap table thead th{position:sticky;top:0;background:var(--card);z-index:1;}
+.es-split-tracker table th.sortable-th{cursor:pointer;user-select:none;}
+.es-split-tracker table th.sortable-th:hover{color:var(--text);}
+.es-split-tracker table th.sortable-th.sorted{color:var(--text);}
+.es-split-tracker table .sort-arrow{font-size:8px;margin-left:2px;}
+@media (max-width:900px){.es-split{flex-direction:column;}.es-split-log{flex:none;max-width:100%;}.es-split-tracker #esTableWrap{max-height:420px;}}
 .tasks-split{display:flex;gap:16px;align-items:stretch;flex:1 1 auto;min-height:0;}
 .tasks-sidebar{flex:0 0 300px;max-width:300px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;}
 .tasks-split-entries{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;min-height:0;}
