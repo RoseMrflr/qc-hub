@@ -95,7 +95,11 @@
   .tbl tr.overdue td:first-child{border-left-color:var(--red);}
   .tbl tr:hover{background:var(--page);}
   .ellip{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .status{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;display:inline-block;}
+  .status{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;display:inline-block;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .catpill{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;display:inline-block;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .tbl th[data-key]{cursor:pointer;user-select:none;}
+  .tbl th[data-key]:hover{color:var(--ink);}
+  .sortarrow{font-size:8px;margin-left:2px;}
   .st-open{background:var(--blue-bg);color:var(--blue);}
   .st-progress{background:var(--amber-bg);color:var(--amber);}
   .st-scheduled{background:var(--slate-bg);color:var(--slate);}
@@ -180,27 +184,27 @@
               <option>Completed</option><option>Closed</option>
             </select>
             <div class="spacer"></div>
-            <span class="tlabel">Sort by</span>
-            <select id="sortBy">
-              <option value="date">Date</option>
-              <option value="status">Status</option>
-              <option value="category">Category</option>
-            </select>
             <button class="btn" id="overdueToggle">Show overdue only</button>
+            <button class="btn" id="archiveBtn">Archive completed</button>
             <button class="btn" id="refreshBtn">Refresh</button>
           </div>
           <div class="tablewrap">
             <table class="tbl">
               <colgroup>
-                <col style="width:6.5%"><col style="width:8%"><col style="width:13%">
-                <col style="width:8%"><col style="width:12%"><col style="width:9%">
-                <col style="width:13%"><col style="width:6.5%"><col style="width:8%">
-                <col style="width:6%"><col style="width:5%"><col style="width:5%">
+                <col style="width:9%"><col style="width:9%"><col style="width:7%">
+                <col style="width:7%"><col style="width:11%"><col style="width:13%">
+                <col style="width:10%"><col style="width:12%"><col style="width:7%">
+                <col style="width:10%"><col style="width:5%">
               </colgroup>
               <thead><tr>
-                <th>Date</th><th>Type</th><th>Topic</th><th>Person</th><th>Details</th>
-                <th>Issues</th><th>Goals / Action items</th><th>Due</th><th>Status</th>
-                <th>Priority</th><th>Link</th><th></th>
+                <th data-key="category">Category<span class="sortarrow"></span></th>
+                <th data-key="person">Person<span class="sortarrow"></span></th>
+                <th data-key="date">Date<span class="sortarrow"></span></th>
+                <th data-key="type">Type<span class="sortarrow"></span></th>
+                <th>Topic</th><th>Details</th><th>Issues</th><th>Goals / Action items</th>
+                <th data-key="due">Due<span class="sortarrow"></span></th>
+                <th data-key="status">Status<span class="sortarrow"></span></th>
+                <th>Link</th>
               </tr></thead>
               <tbody id="entriesBody"></tbody>
             </table>
@@ -220,15 +224,15 @@
       <div class="tablewrap">
         <table class="tbl">
           <colgroup>
-            <col style="width:6%"><col style="width:7.5%"><col style="width:12%">
-            <col style="width:7.5%"><col style="width:11%"><col style="width:8.5%">
-            <col style="width:12%"><col style="width:6%"><col style="width:7.5%">
-            <col style="width:5.5%"><col style="width:4.5%"><col style="width:12%">
+            <col style="width:8%"><col style="width:8%"><col style="width:6.5%">
+            <col style="width:6.5%"><col style="width:10%"><col style="width:12%">
+            <col style="width:9%"><col style="width:12%"><col style="width:6.5%">
+            <col style="width:7.5%"><col style="width:4.5%"><col style="width:9.5%">
           </colgroup>
           <thead><tr>
-            <th>Date</th><th>Type</th><th>Topic</th><th>Person</th><th>Details</th>
+            <th>Category</th><th>Person</th><th>Date</th><th>Type</th><th>Topic</th><th>Details</th>
             <th>Issues</th><th>Goals / Action items</th><th>Due</th><th>Status</th>
-            <th>Priority</th><th>Link</th><th>Archived</th>
+            <th>Link</th><th>Archived</th>
           </tr></thead>
           <tbody id="archBody"></tbody>
         </table>
@@ -245,6 +249,11 @@ const CATS = {
   '🗂️ Projects':'purple', '📚 T&D':'teal', '🗓️ Admin Tasks':'slate'
 };
 const CAT_HEX = {blue:'#2563EB',red:'#DC2626',amber:'#D97706',purple:'#7C3AED',teal:'#0891B2',slate:'#475569'};
+const CAT_BG = {blue:'#E8EFFD',red:'#FCE9E9',amber:'#FCF1E1',purple:'#F1EAFD',teal:'#E3F4F8',slate:'#EEF1F4'};
+const CAT_SHORT = {
+  '💬 C&M':'C&M', '🚨 ES Tracker':'ES Tracker', '❓ Clarifications':'Clarifications',
+  '🗂️ Projects':'Projects', '📚 T&D':'T&D', '🗓️ Admin Tasks':'Admin Tasks'
+};
 function catColor(c){ return CATS[c] || 'blue'; }
 function statusClass(s){
   if(['Completed','Closed','Resolved'].includes(s)) return 'st-done';
@@ -303,18 +312,18 @@ function firstOfMonthsBetween(startISO, endISO){
 
 async function runRecurringCatchUp(){
   const today = todayISO();
-  const start = meta.lastRecurCheck || '2026-01-01';
+  const start = meta.lastRecurCheck || '2026-08-01';
   if(start > today){ return 0; }
   let added = 0;
   for(const dISO of firstOfMonthsBetween(start, today)){
     if(!tasks.some(x=>x.date===dISO && x.type==='Admin Task' && x.topic==='Monthly Report')){
-      tasks.push({id:uid(), date:dISO, dueDate:dISO, category:'🗓️ Admin Tasks', type:'Admin Task', topic:'Monthly Report', person:'', details:'', goals:'', issues:'', commendable:'', actionItems:'', status:'Scheduled', priority:'', link:''});
+      tasks.push({id:uid(), date:dISO, dueDate:dISO, category:'🗓️ Admin Tasks', type:'Admin Task', topic:'Monthly Report', person:'', details:'', goals:'', issues:'', commendable:'', actionItems:'', status:'Scheduled', link:''});
       added++;
     }
   }
   for(const dISO of fridaysBetween(start, today)){
     if(!tasks.some(x=>x.date===dISO && x.type==='Calibration' && x.topic==='Weekly Calibration')){
-      tasks.push({id:uid(), date:dISO, dueDate:dISO, category:'📚 T&D', type:'Calibration', topic:'Weekly Calibration', person:'', details:'', goals:'', issues:'', commendable:'', actionItems:'', status:'Scheduled', priority:'', link:''});
+      tasks.push({id:uid(), date:dISO, dueDate:dISO, category:'📚 T&D', type:'Calibration', topic:'Weekly Calibration', person:'', details:'', goals:'', issues:'', commendable:'', actionItems:'', status:'Scheduled', link:''});
       added++;
     }
   }
@@ -354,43 +363,71 @@ function entryRowHtml(t, opts){
   const today = todayISO();
   const overdue = effDate(t) < today && !isDone(t.status);
   const goalsAction = [t.goals, t.actionItems].filter(Boolean).join(' — ');
+  const c = catColor(t.category);
   return `<tr class="${overdue && !opts.archived ? 'overdue' : ''}" ${opts.archived?'':`onclick="editTask('${t.id}')" style="cursor:pointer;"`}>
+    <td><span class="catpill" style="background:${CAT_BG[c]};color:${CAT_HEX[c]}" title="${escapeHtml(t.category||'')}">${escapeHtml(CAT_SHORT[t.category]||t.category||'')}</span></td>
+    <td><span class="ellip" title="${escapeHtml(t.person||'')}">${escapeHtml(t.person||'')}</span></td>
     <td><span class="ellip">${fmtDate(t.date)}</span></td>
     <td><span class="ellip" title="${escapeHtml(t.type||'')}">${escapeHtml(t.type||'')}</span></td>
     <td><span class="ellip" title="${escapeHtml(t.topic||'')}">${escapeHtml(t.topic||'Untitled')}</span></td>
-    <td><span class="ellip" title="${escapeHtml(t.person||'')}">${escapeHtml(t.person||'')}</span></td>
     <td><span class="ellip" title="${escapeHtml(t.details||'')}">${escapeHtml(t.details||'')}</span></td>
     <td><span class="ellip" title="${escapeHtml(t.issues||'')}">${escapeHtml(t.issues||'')}</span></td>
     <td><span class="ellip" title="${escapeHtml(goalsAction)}">${escapeHtml(goalsAction)}</span></td>
     <td><span class="ellip">${fmtDate(t.dueDate)}</span></td>
     <td><span class="status ${statusClass(t.status)}">${t.status||'Open'}</span></td>
-    <td><span class="ellip" title="${escapeHtml(t.priority||'')}">${escapeHtml(t.priority||'')}</span></td>
     <td>${t.link?`<a class="linklet" href="${escapeHtml(t.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${escapeHtml(t.link)}">&#128279;</a>`:''}</td>
-    <td>${opts.archived ? (t.archivedOn?fmtDate(t.archivedOn):'') : `<button class="rowbtn" onclick="event.stopPropagation();editTask('${t.id}')">Edit</button>`}</td>
+    ${opts.archived ? `<td>${t.archivedOn?fmtDate(t.archivedOn):''}</td>` : ''}
   </tr>`;
 }
 
-function renderEntries(){
-  const catF = document.getElementById('filterCat').value;
-  const statF = document.getElementById('filterStatus').value;
-  const sortBy = document.getElementById('sortBy').value;
-  const today = todayISO();
-  let list = tasks.filter(t => (!catF || t.category===catF) && (!statF || t.status===statF));
-  if(overdueOnly){ list = list.filter(t => effDate(t) < today && !isDone(t.status)); }
+let sortState = {key:'date', dir:'asc'};
+
+function sortTasks(list){
+  const {key,dir} = sortState;
+  const mul = dir==='asc'?1:-1;
+  const val = (t)=>{
+    if(key==='due') return effDate(t);
+    if(key==='person') return (t.person||'').toLowerCase();
+    if(key==='type') return (t.type||'').toLowerCase();
+    if(key==='status') return t.status||'';
+    if(key==='category') return t.category||'';
+    return t.date||'';
+  };
   list.sort((a,b)=>{
-    if(sortBy==='status') return (a.status||'').localeCompare(b.status||'');
-    if(sortBy==='category') return (a.category||'').localeCompare(b.category||'');
-    return effDate(a).localeCompare(effDate(b));
+    const av=val(a), bv=val(b);
+    if(av<bv) return -1*mul;
+    if(av>bv) return 1*mul;
+    return 0;
   });
   // pin overdue to top, like the source app
+  const today = todayISO();
   list.sort((a,b)=>{
     const aOver = effDate(a)<today && !isDone(a.status) ? 0 : 1;
     const bOver = effDate(b)<today && !isDone(b.status) ? 0 : 1;
     return aOver-bOver;
   });
+  return list;
+}
+
+function updateSortHeaderUI(){
+  document.querySelectorAll('#panel-tasks .tbl th[data-key]').forEach(th=>{
+    const arrow = th.querySelector('.sortarrow');
+    if(!arrow) return;
+    if(th.dataset.key===sortState.key){ arrow.textContent = sortState.dir==='asc' ? ' ▲' : ' ▼'; th.classList.add('sorted'); }
+    else { arrow.textContent=''; th.classList.remove('sorted'); }
+  });
+}
+
+function renderEntries(){
+  const catF = document.getElementById('filterCat').value;
+  const statF = document.getElementById('filterStatus').value;
+  const today = todayISO();
+  let list = tasks.filter(t => (!catF || t.category===catF) && (!statF || t.status===statF));
+  if(overdueOnly){ list = list.filter(t => effDate(t) < today && !isDone(t.status)); }
+  list = sortTasks(list);
   document.getElementById('entriesBody').innerHTML = list.length
     ? list.map(t=>entryRowHtml(t,{})).join('')
-    : '<tr><td colspan="12" class="empty">No entries match. Add one to get started.</td></tr>';
+    : '<tr><td colspan="11" class="empty">No entries match. Add one to get started.</td></tr>';
 }
 
 function renderArchive(){
@@ -440,7 +477,7 @@ async function archiveDoneTasks(){
 }
 
 function openModal(existing){
-  const t = existing || {id:uid(), date:todayISO(), dueDate:todayISO(), category:Object.keys(CATS)[0], type:'', topic:'', person:'', details:'', goals:'', issues:'', commendable:'', actionItems:'', status:'Open', priority:'Medium', link:''};
+  const t = existing || {id:uid(), date:todayISO(), dueDate:todayISO(), category:Object.keys(CATS)[0], type:'', topic:'', person:'', details:'', goals:'', issues:'', commendable:'', actionItems:'', status:'Open', link:''};
   const isNew = !existing;
   const catOptions = Object.keys(CATS).map(c=>`<option ${c===t.category?'selected':''}>${c}</option>`).join('');
   document.getElementById('modalRoot').innerHTML = `
@@ -464,12 +501,7 @@ function openModal(existing){
           <div class="field"><label>Issues</label><textarea id="f-issues">${escapeHtml(t.issues||'')}</textarea></div>
           <div class="field"><label>Commendable</label><textarea id="f-commendable">${escapeHtml(t.commendable||'')}</textarea></div>
           <div class="field"><label>Action items</label><textarea id="f-action">${escapeHtml(t.actionItems||'')}</textarea></div>
-          <div class="field"><label>Priority</label>
-            <select id="f-priority">
-              ${['Low','Medium','High'].map(p=>`<option ${p===t.priority?'selected':''}>${p}</option>`).join('')}
-            </select>
-          </div>
-          <div class="field"><label>Link</label><input type="url" id="f-link" value="${escapeHtml(t.link||'')}" placeholder="https://..."></div>
+          <div class="field full"><label>Link</label><input type="url" id="f-link" value="${escapeHtml(t.link||'')}" placeholder="https://..."></div>
         </div>
         <div class="modal-actions">
           ${isNew?'':'<button class="btn" id="deleteBtn" style="margin-right:auto;color:var(--red);">Delete</button>'}
@@ -501,7 +533,6 @@ function openModal(existing){
       issues:document.getElementById('f-issues').value,
       commendable:document.getElementById('f-commendable').value,
       actionItems:document.getElementById('f-action').value,
-      priority:document.getElementById('f-priority').value,
       link:document.getElementById('f-link').value
     };
     const idx = tasks.findIndex(x=>x.id===t.id);
@@ -534,14 +565,24 @@ document.querySelectorAll('.tab').forEach(tab=>{
 document.getElementById('addTaskBtn').onclick = ()=>openModal(null);
 document.getElementById('filterCat').onchange = renderEntries;
 document.getElementById('filterStatus').onchange = renderEntries;
-document.getElementById('sortBy').onchange = renderEntries;
 document.getElementById('refreshBtn').onclick = renderAll;
 document.getElementById('overdueToggle').onclick = (e)=>{
   overdueOnly = !overdueOnly;
   e.target.classList.toggle('active', overdueOnly);
   renderEntries();
 };
+document.getElementById('archiveBtn').onclick = async ()=>{ await archiveDoneTasks(); renderAll(); };
 document.getElementById('archSearch').oninput = renderArchive;
+document.querySelectorAll('#panel-tasks .tbl th[data-key]').forEach(th=>{
+  th.onclick = ()=>{
+    const k = th.dataset.key;
+    if(sortState.key===k){ sortState.dir = sortState.dir==='asc'?'desc':'asc'; }
+    else { sortState = {key:k, dir:'asc'}; }
+    updateSortHeaderUI();
+    renderEntries();
+  };
+});
+updateSortHeaderUI();
 document.getElementById('calPrev').onclick = ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderMiniCal(); };
 document.getElementById('calNext').onclick = ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderMiniCal(); };
 
