@@ -71,11 +71,9 @@
   .cal-dot{width:4px;height:4px;border-radius:50%;margin-top:1px;}
 
   .panel-card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
-  .panel-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 12px;}
-  .panel-card-head h3{margin:0 0 3px;font-size:15px;}
-  .panel-card-head p{margin:0;font-size:12px;color:var(--ink-soft);}
 
-  .toolbar2{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:0 18px 14px;}
+  .toolbar2{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:16px 18px 14px;}
+  .toolbar2 h3{margin:0 4px 0 0;font-size:15px;}
   .tlabel{font-size:11px;color:var(--ink-soft);}
   .spacer{flex:1;}
   select,input[type=text],input[type=date],input[type=url]{font-family:inherit;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);}
@@ -100,6 +98,15 @@
   .tbl th[data-key]{cursor:pointer;user-select:none;}
   .tbl th[data-key]:hover{color:var(--ink);}
   .sortarrow{font-size:8px;margin-left:2px;}
+  .colfilter{display:inline-block;margin-left:4px;padding:0 3px;border-radius:4px;cursor:pointer;color:var(--ink-soft);}
+  .colfilter:hover{background:var(--page);color:var(--ink);}
+  .colfilter.active{background:var(--blue-bg);color:var(--blue);}
+  .col-filter-menu{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:8px;min-width:160px;max-height:260px;overflow-y:auto;z-index:200;font-size:12.5px;}
+  .col-filter-actions{display:flex;gap:10px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line);}
+  .col-filter-actions button{background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;padding:0;text-decoration:underline;}
+  .col-filter-group-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft);margin:6px 0 2px;}
+  .col-filter-item{display:flex;align-items:center;gap:6px;padding:3px 2px;white-space:nowrap;cursor:pointer;font-weight:400;color:var(--ink);}
+  .col-filter-item input{width:auto;padding:0;}
   .st-open{background:var(--blue-bg);color:var(--blue);}
   .st-progress{background:var(--amber-bg);color:var(--amber);}
   .st-scheduled{background:var(--slate-bg);color:var(--slate);}
@@ -111,7 +118,7 @@
   .empty{padding:36px 20px;text-align:center;color:var(--ink-soft);font-size:13px;}
 
   .modal-bg{position:fixed;inset:0;background:rgba(17,28,59,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:10;}
-  .modal{background:var(--card);border-radius:12px;padding:22px;width:560px;max-width:94vw;box-shadow:0 12px 32px rgba(0,0,0,.2);}
+  .modal{background:var(--card);border-radius:12px;padding:22px;width:860px;max-width:94vw;box-shadow:0 12px 32px rgba(0,0,0,.2);}
   .modal h3{margin:0 0 16px;font-size:16px;}
   .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .field{margin-bottom:12px;}
@@ -169,41 +176,30 @@
 
       <div class="main-col">
         <div class="panel-card">
-          <div class="panel-card-head">
-            <div>
-              <h3>Log Entries</h3>
-              <p>Add a new entry, or click any row below to edit it.</p>
-            </div>
-            <button class="btn primary" id="addTaskBtn">+ Add Entry</button>
-          </div>
           <div class="toolbar2">
-            <select id="filterCat"><option value="">All categories</option></select>
-            <select id="filterStatus">
-              <option value="">All statuses</option>
-              <option>Open</option><option>In Progress</option><option>Scheduled</option>
-              <option>Completed</option><option>Closed</option>
-            </select>
+            <h3>Log Entries</h3>
+            <button class="btn primary" id="addTaskBtn">+ Add Entry</button>
             <div class="spacer"></div>
             <button class="btn" id="overdueToggle">Show overdue only</button>
-            <button class="btn" id="archiveBtn">Archive completed</button>
+            <button class="btn" id="archiveBtn">Archive Closed Entries</button>
             <button class="btn" id="refreshBtn">Refresh</button>
           </div>
           <div class="tablewrap">
             <table class="tbl">
               <colgroup>
-                <col style="width:9%"><col style="width:9%"><col style="width:7%">
-                <col style="width:7%"><col style="width:11%"><col style="width:13%">
-                <col style="width:10%"><col style="width:12%"><col style="width:7%">
+                <col style="width:9%"><col style="width:9%"><col style="width:11%">
+                <col style="width:7%"><col style="width:7%"><col style="width:9%">
+                <col style="width:10%"><col style="width:12%"><col style="width:11%">
                 <col style="width:10%"><col style="width:5%">
               </colgroup>
               <thead><tr>
-                <th data-key="category">Category<span class="sortarrow"></span></th>
-                <th data-key="person">Person<span class="sortarrow"></span></th>
-                <th data-key="date">Date<span class="sortarrow"></span></th>
-                <th data-key="type">Type<span class="sortarrow"></span></th>
+                <th data-key="category">Category<span class="sortarrow"></span><span class="colfilter" data-filter="category">&#8964;</span></th>
+                <th data-key="person">Person<span class="sortarrow"></span><span class="colfilter" data-filter="person">&#8964;</span></th>
+                <th data-key="date">Date<span class="sortarrow"></span><span class="colfilter" data-filter="date">&#8964;</span></th>
+                <th data-key="type">Type<span class="sortarrow"></span><span class="colfilter" data-filter="type">&#8964;</span></th>
                 <th>Topic</th><th>Details</th><th>Issues</th><th>Goals / Action items</th>
                 <th data-key="due">Due<span class="sortarrow"></span></th>
-                <th data-key="status">Status<span class="sortarrow"></span></th>
+                <th data-key="status">Status<span class="sortarrow"></span><span class="colfilter" data-filter="status">&#8964;</span></th>
                 <th>Link</th>
               </tr></thead>
               <tbody id="entriesBody"></tbody>
@@ -224,9 +220,9 @@
       <div class="tablewrap">
         <table class="tbl">
           <colgroup>
-            <col style="width:8%"><col style="width:8%"><col style="width:6.5%">
-            <col style="width:6.5%"><col style="width:10%"><col style="width:12%">
-            <col style="width:9%"><col style="width:12%"><col style="width:6.5%">
+            <col style="width:8%"><col style="width:8%"><col style="width:10%">
+            <col style="width:6.5%"><col style="width:7%"><col style="width:8%">
+            <col style="width:9%"><col style="width:12%"><col style="width:10%">
             <col style="width:7.5%"><col style="width:4.5%"><col style="width:9.5%">
           </colgroup>
           <thead><tr>
@@ -264,7 +260,7 @@ function statusClass(s){
 function fmtDate(iso){
   if(!iso) return '';
   const d = new Date(iso+'T00:00:00');
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function uid(){ return 't'+Math.random().toString(36).slice(2,10); }
@@ -352,12 +348,6 @@ function renderStats(){
     `<div class="stat-mini${warn?' warn':''}"><div class="label">${l}</div><div class="value">${v}</div></div>`).join('');
 }
 
-function renderCatFilter(){
-  const sel = document.getElementById('filterCat');
-  const current = sel.value;
-  sel.innerHTML = '<option value="">All categories</option>' + Object.keys(CATS).map(c=>`<option ${c===current?'selected':''}>${c}</option>`).join('');
-}
-
 function entryRowHtml(t, opts){
   opts = opts || {};
   const today = todayISO();
@@ -418,12 +408,114 @@ function updateSortHeaderUI(){
   });
 }
 
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let columnFilters = {}; // key -> Set of allowed values (date -> {years:Set, months:Set})
+let activeFilterMenu = null;
+
+function distinctTaskValues(key){
+  return Array.from(new Set(tasks.map(t=>t[key]||'').filter(v=>v!==''))).sort();
+}
+function distinctDateParts(){
+  const dates = tasks.filter(t=>t.date).map(t=>t.date);
+  const years = Array.from(new Set(dates.map(d=>d.slice(0,4)))).sort();
+  const months = Array.from(new Set(dates.map(d=>d.slice(5,7)))).sort();
+  return {years, months};
+}
+function closeColumnFilterMenu(){
+  if(activeFilterMenu){ activeFilterMenu.remove(); activeFilterMenu=null; }
+}
+function updateFilterIconState(){
+  document.querySelectorAll('#panel-tasks .colfilter').forEach(el=>{
+    el.classList.toggle('active', !!columnFilters[el.dataset.filter]);
+  });
+}
+function toggleColumnFilterMenu(ev, key){
+  ev.stopPropagation();
+  const wasOpenForKey = activeFilterMenu && activeFilterMenu.dataset.key===key;
+  closeColumnFilterMenu();
+  if(wasOpenForKey) return;
+  const menu = document.createElement('div');
+  menu.className = 'col-filter-menu';
+  menu.dataset.key = key;
+  if(key==='date'){
+    const parts = distinctDateParts();
+    const sel = columnFilters.date || {};
+    menu.innerHTML =
+      '<div class="col-filter-actions"><button type="button" onclick="event.stopPropagation();setDateFilterAll(true)">All</button><button type="button" onclick="event.stopPropagation();setDateFilterAll(false)">None</button></div>' +
+      '<div class="col-filter-group-label">Year</div>' +
+      parts.years.map(y=>{
+        const checked = !sel.years || sel.years.has(y);
+        return `<label class="col-filter-item"><input type="checkbox" data-datepart="year" data-val="${y}" ${checked?'checked':''} onclick="event.stopPropagation()" onchange="onDateFilterCheck()"> ${y}</label>`;
+      }).join('') +
+      '<div class="col-filter-group-label">Month</div>' +
+      parts.months.map(m=>{
+        const checked = !sel.months || sel.months.has(m);
+        const label = MONTH_NAMES[parseInt(m,10)-1] || m;
+        return `<label class="col-filter-item"><input type="checkbox" data-datepart="month" data-val="${m}" ${checked?'checked':''} onclick="event.stopPropagation()" onchange="onDateFilterCheck()"> ${label}</label>`;
+      }).join('');
+  } else {
+    const values = distinctTaskValues(key);
+    const selected = columnFilters[key];
+    menu.innerHTML =
+      `<div class="col-filter-actions"><button type="button" onclick="event.stopPropagation();setColumnFilterAll('${key}',true)">All</button><button type="button" onclick="event.stopPropagation();setColumnFilterAll('${key}',false)">None</button></div>` +
+      values.map(v=>{
+        const checked = !selected || selected.has(v);
+        const label = key==='category' ? (CAT_SHORT[v]||v) : v;
+        return `<label class="col-filter-item"><input type="checkbox" data-val="${escapeHtml(v)}" ${checked?'checked':''} onclick="event.stopPropagation()" onchange="onColumnFilterCheck('${key}')"> ${escapeHtml(label)}</label>`;
+      }).join('');
+  }
+  document.body.appendChild(menu);
+  const rect = ev.currentTarget.getBoundingClientRect();
+  menu.style.top = (window.scrollY+rect.bottom+4)+'px';
+  menu.style.left = (window.scrollX+rect.left)+'px';
+  activeFilterMenu = menu;
+  setTimeout(()=>document.addEventListener('click', closeColumnFilterMenu, {once:true}), 0);
+}
+function onColumnFilterCheck(key){
+  const boxes = document.querySelectorAll('.col-filter-menu input[data-val]');
+  const values = distinctTaskValues(key);
+  const checked = Array.from(boxes).filter(b=>b.checked).map(b=>b.dataset.val);
+  if(checked.length===values.length){ delete columnFilters[key]; } else { columnFilters[key]=new Set(checked); }
+  updateFilterIconState();
+  renderEntries();
+}
+function setColumnFilterAll(key, allOn){
+  document.querySelectorAll('.col-filter-menu input[data-val]').forEach(b=>{ b.checked=allOn; });
+  onColumnFilterCheck(key);
+}
+function onDateFilterCheck(){
+  const parts = distinctDateParts();
+  const yearBoxes = document.querySelectorAll('.col-filter-menu input[data-datepart="year"]');
+  const monthBoxes = document.querySelectorAll('.col-filter-menu input[data-datepart="month"]');
+  const checkedYears = Array.from(yearBoxes).filter(b=>b.checked).map(b=>b.dataset.val);
+  const checkedMonths = Array.from(monthBoxes).filter(b=>b.checked).map(b=>b.dataset.val);
+  const f = {};
+  if(checkedYears.length!==parts.years.length) f.years = new Set(checkedYears);
+  if(checkedMonths.length!==parts.months.length) f.months = new Set(checkedMonths);
+  if(!f.years && !f.months){ delete columnFilters.date; } else { columnFilters.date = f; }
+  updateFilterIconState();
+  renderEntries();
+}
+function setDateFilterAll(allOn){
+  document.querySelectorAll('.col-filter-menu input[data-datepart]').forEach(b=>{ b.checked=allOn; });
+  onDateFilterCheck();
+}
+
 function renderEntries(){
-  const catF = document.getElementById('filterCat').value;
-  const statF = document.getElementById('filterStatus').value;
   const today = todayISO();
-  let list = tasks.filter(t => (!catF || t.category===catF) && (!statF || t.status===statF));
+  let list = tasks.slice();
   if(overdueOnly){ list = list.filter(t => effDate(t) < today && !isDone(t.status)); }
+  Object.keys(columnFilters).forEach(key=>{
+    const f = columnFilters[key];
+    if(key==='date'){
+      list = list.filter(t=>{
+        const y=(t.date||'').slice(0,4), m=(t.date||'').slice(5,7);
+        return (!f.years||f.years.has(y)) && (!f.months||f.months.has(m));
+      });
+    } else {
+      list = list.filter(t=> f.has(t[key]||''));
+    }
+  });
   list = sortTasks(list);
   document.getElementById('entriesBody').innerHTML = list.length
     ? list.map(t=>entryRowHtml(t,{})).join('')
@@ -548,7 +640,6 @@ function editTask(id){ openModal(tasks.find(t=>t.id===id)); }
 
 function renderAll(){
   renderStats();
-  renderCatFilter();
   renderEntries();
   renderArchive();
   renderMiniCal();
@@ -563,8 +654,6 @@ document.querySelectorAll('.tab').forEach(tab=>{
   };
 });
 document.getElementById('addTaskBtn').onclick = ()=>openModal(null);
-document.getElementById('filterCat').onchange = renderEntries;
-document.getElementById('filterStatus').onchange = renderEntries;
 document.getElementById('refreshBtn').onclick = renderAll;
 document.getElementById('overdueToggle').onclick = (e)=>{
   overdueOnly = !overdueOnly;
@@ -582,7 +671,11 @@ document.querySelectorAll('#panel-tasks .tbl th[data-key]').forEach(th=>{
     renderEntries();
   };
 });
+document.querySelectorAll('#panel-tasks .colfilter').forEach(el=>{
+  el.onclick = (ev)=> toggleColumnFilterMenu(ev, el.dataset.filter);
+});
 updateSortHeaderUI();
+updateFilterIconState();
 document.getElementById('calPrev').onclick = ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderMiniCal(); };
 document.getElementById('calNext').onclick = ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderMiniCal(); };
 
