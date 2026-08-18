@@ -63,7 +63,6 @@
       OPTIONS = opts;
       fillSelect('e_Type', opts.type, false);
       fillSelect('e_Status', opts.status, false);
-      fillSelect('e_Priority', opts.priority, true);
       fillSelect('es_ImpactLevel', opts.impact, false);
       fillSelect('es_ErrorClass', opts.errorClass, false);
       fillSelect('es_Status', opts.status, false);
@@ -120,7 +119,6 @@
     document.getElementById('e_GoalsActionItems').value = e.GoalsActionItems || '';
     document.getElementById('e_DueDate').value = e.DueDate || '';
     document.getElementById('e_Status').value = e.Status || '';
-    document.getElementById('e_Priority').value = e.Priority || '';
     document.getElementById('e_Link').value = e.Link || '';
     document.getElementById('recurringRow').classList.add('hidden');
     document.getElementById('recurringFields').classList.add('hidden');
@@ -146,7 +144,6 @@
       Issues: document.getElementById('e_Issues').value,
       GoalsActionItems: document.getElementById('e_GoalsActionItems').value,
       Status: document.getElementById('e_Status').value,
-      Priority: document.getElementById('e_Priority').value,
       Link: document.getElementById('e_Link').value
     };
 
@@ -250,26 +247,30 @@
   }
 
   // ---------- ENTRIES TABLE (editable, sortable, filterable) ----------
-  const ENTRY_COLS_ = ['Date','Type','Topic','Person','Details','Issues','GoalsActionItems','DueDate','Status','Priority','Link'];
-  const ENTRY_COL_LABELS_ = {Date:'Date',Type:'Type',Topic:'Topic',Person:'Person',Details:'Details',Issues:'Issues',GoalsActionItems:'Goals / Action Items',DueDate:'Due',Status:'Status',Priority:'Priority',Link:'Link'};
+  const ENTRY_COLS_ = ['Date','Type','Topic','Person','Details','Issues','GoalsActionItems','DueDate','Status','Link'];
+  const ENTRY_COL_LABELS_ = {Date:'Date',Type:'Type',Topic:'Topic',Person:'Person',Details:'Details',Issues:'Issues',GoalsActionItems:'Goals / Action Items',DueDate:'Due',Status:'Status',Link:'Link'};
+  const SORTABLE_COLS_ = ['Date','Type','Person'];
+  let sortState = {key:'Date', dir:'desc'};
+
+  function onHeaderSortClick_(key) {
+    if (sortState.key === key) { sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc'; }
+    else { sortState = {key: key, dir: key === 'Date' ? 'desc' : 'asc'}; }
+    renderEntriesTable();
+  }
 
   function renderEntriesTable() {
     let list = ALL_ENTRIES.filter(e => !e.Archived);
     if (dateFilter) list = list.filter(e => e.Date === dateFilter);
     if (showOverdueOnly) list = list.filter(isOverdue);
 
-    const sortBy = document.getElementById('sortBySelect').value;
+    const mul = sortState.dir === 'asc' ? 1 : -1;
     list.sort((a, b) => {
       const ao = isOverdue(a) ? 0 : 1;
       const bo = isOverdue(b) ? 0 : 1;
       if (ao !== bo) return ao - bo;
-      if (sortBy === 'person') {
-        const pc = (a.Person || '').localeCompare(b.Person || '');
-        if (pc !== 0) return pc;
-      } else if (sortBy === 'type') {
-        const tc = (a.Type || '').localeCompare(b.Type || '');
-        if (tc !== 0) return tc;
-      }
+      const av = a[sortState.key] || '', bv = b[sortState.key] || '';
+      const c = av.localeCompare(bv);
+      if (c !== 0) return c * mul;
       return (b.Date || '').localeCompare(a.Date || '');
     });
 
@@ -279,7 +280,7 @@
       return;
     }
 
-    wrap.innerHTML = renderEntriesTableHtml_(list, { archiveAction: true });
+    wrap.innerHTML = renderEntriesTableHtml_(list, { archiveAction: true, sortable: true });
   }
 
   // Shared table renderer for both the Tasks entries list and the Archive tab.
@@ -288,7 +289,14 @@
   function renderEntriesTableHtml_(list, opts) {
     opts = opts || {};
     let html = '<div style="overflow-x:auto"><table class="entries-table"><thead><tr>' +
-      ENTRY_COLS_.map(c => `<th>${ENTRY_COL_LABELS_[c]}</th>`).join('') + '<th class="actions-col"></th></tr></thead><tbody>';
+      ENTRY_COLS_.map(c => {
+        if (opts.sortable && SORTABLE_COLS_.includes(c)) {
+          const active = sortState.key === c;
+          const arrow = active ? (sortState.dir === 'asc' ? ' ▲' : ' ▼') : '';
+          return `<th class="sortable-th${active ? ' sorted' : ''}" onclick="onHeaderSortClick_('${c}')">${ENTRY_COL_LABELS_[c]}<span class="sort-arrow">${arrow}</span></th>`;
+        }
+        return `<th>${ENTRY_COL_LABELS_[c]}</th>`;
+      }).join('') + '<th class="actions-col"></th></tr></thead><tbody>';
 
     list.forEach(e => {
       const rowClasses = [];
