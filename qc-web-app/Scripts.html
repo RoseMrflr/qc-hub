@@ -250,7 +250,10 @@
   const ENTRY_COLS_ = ['Date','Type','Topic','Person','Details','Issues','GoalsActionItems','DueDate','Status','Link'];
   const ENTRY_COL_LABELS_ = {Date:'Date',Type:'Type',Topic:'Topic',Person:'Person',Details:'Details',Issues:'Issues',GoalsActionItems:'Goals / Action Items',DueDate:'Due',Status:'Status',Link:'Link'};
   const SORTABLE_COLS_ = ['Date','Type','Person'];
+  const FILTERABLE_COLS_ = ['Type','Person','Status'];
   let sortState = {key:'Date', dir:'desc'};
+  let columnFilters = {}; // col -> Set of allowed values (absent = no filter on that col)
+  let activeFilterMenu = null;
 
   function onHeaderSortClick_(key) {
     if (sortState.key === key) { sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc'; }
@@ -258,10 +261,64 @@
     renderEntriesTable();
   }
 
+  function distinctColumnValues_(col) {
+    return Array.from(new Set(ALL_ENTRIES.filter(e => !e.Archived).map(e => e[col] || '').filter(v => v !== ''))).sort();
+  }
+
+  function closeColumnFilterMenu_() {
+    if (activeFilterMenu) { activeFilterMenu.remove(); activeFilterMenu = null; }
+  }
+
+  function toggleColumnFilterMenu_(ev, col) {
+    const wasOpenForCol = activeFilterMenu && activeFilterMenu.dataset.col === col;
+    closeColumnFilterMenu_();
+    if (wasOpenForCol) return;
+
+    const values = distinctColumnValues_(col);
+    const selected = columnFilters[col];
+    const menu = document.createElement('div');
+    menu.className = 'col-filter-menu';
+    menu.dataset.col = col;
+    menu.innerHTML =
+      '<div class="col-filter-actions">' +
+        '<button type="button" class="link-btn" onclick="event.stopPropagation();setColumnFilterAll_(\'' + col + '\',true)">All</button>' +
+        '<button type="button" class="link-btn" onclick="event.stopPropagation();setColumnFilterAll_(\'' + col + '\',false)">None</button>' +
+      '</div>' +
+      values.map(v => {
+        const checked = !selected || selected.has(v);
+        return '<label class="col-filter-item"><input type="checkbox" data-col="' + col + '" data-val="' + escapeHtml(v) + '" ' + (checked ? 'checked' : '') +
+          ' onclick="event.stopPropagation()" onchange="onColumnFilterCheck_(\'' + col + '\')"> ' + escapeHtml(v) + '</label>';
+      }).join('');
+    document.body.appendChild(menu);
+    const rect = ev.currentTarget.getBoundingClientRect();
+    menu.style.top = (window.scrollY + rect.bottom + 4) + 'px';
+    menu.style.left = (window.scrollX + rect.left) + 'px';
+    activeFilterMenu = menu;
+    setTimeout(() => document.addEventListener('click', closeColumnFilterMenu_, {once: true}), 0);
+  }
+
+  function onColumnFilterCheck_(col) {
+    const boxes = document.querySelectorAll('.col-filter-menu input[data-col="' + col + '"]');
+    const values = distinctColumnValues_(col);
+    const checked = Array.from(boxes).filter(b => b.checked).map(b => b.dataset.val);
+    if (checked.length === values.length) { delete columnFilters[col]; }
+    else { columnFilters[col] = new Set(checked); }
+    renderEntriesTable();
+  }
+
+  function setColumnFilterAll_(col, allOn) {
+    document.querySelectorAll('.col-filter-menu input[data-col="' + col + '"]').forEach(b => { b.checked = allOn; });
+    onColumnFilterCheck_(col);
+  }
+
   function renderEntriesTable() {
     let list = ALL_ENTRIES.filter(e => !e.Archived);
     if (dateFilter) list = list.filter(e => e.Date === dateFilter);
     if (showOverdueOnly) list = list.filter(isOverdue);
+    Object.keys(columnFilters).forEach(col => {
+      const allowed = columnFilters[col];
+      list = list.filter(e => allowed.has(e[col] || ''));
+    });
 
     const mul = sortState.dir === 'asc' ? 1 : -1;
     list.sort((a, b) => {
@@ -290,12 +347,17 @@
     opts = opts || {};
     let html = '<div style="overflow-x:auto"><table class="entries-table"><thead><tr>' +
       ENTRY_COLS_.map(c => {
-        if (opts.sortable && SORTABLE_COLS_.includes(c)) {
-          const active = sortState.key === c;
-          const arrow = active ? (sortState.dir === 'asc' ? ' ▲' : ' ▼') : '';
-          return `<th class="sortable-th${active ? ' sorted' : ''}" onclick="onHeaderSortClick_('${c}')">${ENTRY_COL_LABELS_[c]}<span class="sort-arrow">${arrow}</span></th>`;
-        }
-        return `<th>${ENTRY_COL_LABELS_[c]}</th>`;
+        const isSortable = opts.sortable && SORTABLE_COLS_.includes(c);
+        const isFilterable = opts.sortable && FILTERABLE_COLS_.includes(c);
+        const active = isSortable && sortState.key === c;
+        const arrow = active ? (sortState.dir === 'asc' ? ' ▲' : ' ▼') : '';
+        const hasFilter = isFilterable && !!columnFilters[c];
+        const thClasses = [];
+        if (isSortable) thClasses.push('sortable-th');
+        if (active) thClasses.push('sorted');
+        const thAttrs = (isSortable ? ` onclick="onHeaderSortClick_('${c}')"` : '') + (thClasses.length ? ` class="${thClasses.join(' ')}"` : '');
+        const filterBtn = isFilterable ? `<span class="col-filter-btn${hasFilter ? ' active' : ''}" onclick="event.stopPropagation();toggleColumnFilterMenu_(event,'${c}')">⌄</span>` : '';
+        return `<th${thAttrs}>${ENTRY_COL_LABELS_[c]}<span class="sort-arrow">${arrow}</span>${filterBtn}</th>`;
       }).join('') + '<th class="actions-col"></th></tr></thead><tbody>';
 
     list.forEach(e => {
