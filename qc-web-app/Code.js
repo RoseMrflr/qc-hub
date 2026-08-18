@@ -13,7 +13,8 @@ const MASTER_SHEET_NAME = 'Master Log';
 const ES_SHEET_NAME = 'ES Tracker';
 const CONFIG_SHEET_NAME = 'Config';
 const EMPLOYEES_SHEET_NAME = 'Employees';
-const REPORTS_FOLDER_NAME = 'ES Tracker — Incident Reports';
+const IR_TEMPLATE_ID = '1gGYc8_vV9awQ9QbGp-X9xrvu__XKFZFwfdGEWqWLKcM';
+const IR_OUTPUT_FOLDER_ID = '1Y3doSwJzO0XW30BP8Pu-kPGiVzNPWfuX';
 
 const MASTER_HEADERS = ['ID','Date','Type','Topic','Person','Details','Issues','GoalsActionItems','DueDate','Status','Priority','Link','CreatedAt','Archived'];
 const ES_HEADERS = ['ID','Agent','EmployeeName','Position','OrderID','IncidentDate','ImpactLevel','ErrorClass',
@@ -394,11 +395,15 @@ function addEsTrackerEntry(entry) {
   return { success: true, id: nextId };
 }
 
-// ---------- DOC CREATOR (Incident Report from ES Tracker) ----------
-function getOrCreateReportsFolder_() {
-  const folders = DriveApp.getFoldersByName(REPORTS_FOLDER_NAME);
-  if (folders.hasNext()) return folders.next();
-  return DriveApp.createFolder(REPORTS_FOLDER_NAME);
+// ---------- DOC CREATOR (Incident Report PDF from ES Tracker, filled from a Doc template) ----------
+function formatIncidentDate_(value) {
+  if (!value) return '';
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'MMMM d, yyyy');
+  }
+  const d = new Date(value + 'T00:00:00');
+  if (isNaN(d)) return String(value);
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), 'MMMM d, yyyy');
 }
 
 function createIncidentDoc(esId) {
@@ -408,63 +413,35 @@ function createIncidentDoc(esId) {
   const record = entries.find(e => Number(e.ID) === Number(esId));
   if (!record) return { success: false, error: 'ES Tracker entry not found' };
 
-  const folder = getOrCreateReportsFolder_();
-  const fileName = `Incident Report - ${record.EmployeeName || record.Agent} - Order ${record.OrderID} - ${record.IncidentDate}`;
-  const doc = DocumentApp.create(fileName);
+  const folder = DriveApp.getFolderById(IR_OUTPUT_FOLDER_ID);
+  const fileName = `${record.OrderID} - ${record.EmployeeName || record.Agent} - IR`;
+
+  const copy = DriveApp.getFileById(IR_TEMPLATE_ID).makeCopy(fileName, folder);
+  const doc = DocumentApp.openById(copy.getId());
   const body = doc.getBody();
-  body.clear();
 
-  body.appendParagraph('ERROR / SANCTION INCIDENT REPORT').setHeading(DocumentApp.ParagraphHeading.TITLE);
-  body.appendParagraph('Search Recorder — Quality Control').setHeading(DocumentApp.ParagraphHeading.SUBTITLE);
-  body.appendHorizontalRule();
-
-  const infoTable = [
-    ['Employee Name', record.EmployeeName || ''],
-    ['Agent / Alias', record.Agent || ''],
-    ['Position', record.Position || ''],
-    ['Order ID', String(record.OrderID || '')],
-    ['Incident Date', record.IncidentDate || ''],
-    ['Level of Impact', record.ImpactLevel || ''],
-    ['Error Class', record.ErrorClass || ''],
-    ['Sanction Type', record.SanctionType || ''],
-    ['Violation Category', record.ViolationCategory || ''],
-    ['Client / SN', record.Client || ''],
-    ['Status', record.Status || '']
-  ];
-  const table = body.appendTable(infoTable);
-  for (let i = 0; i < infoTable.length; i++) {
-    table.getRow(i).getCell(0).setBold(true).setWidth(160);
-  }
-
-  body.appendParagraph('');
-  body.appendParagraph('Error Category').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  body.appendParagraph(record.ErrorCategory || 'N/A');
-
-  body.appendParagraph('Feedback / Description of Incident').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  body.appendParagraph(record.Feedback || 'N/A');
-
-  body.appendParagraph('Root Cause').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  body.appendParagraph(record.RootCause || 'N/A');
-
-  body.appendParagraph('');
-  body.appendHorizontalRule();
-  body.appendParagraph('Acknowledgement').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  body.appendParagraph('I acknowledge that I have read and understood the contents of this incident report.');
-  body.appendParagraph('');
-  body.appendParagraph('Employee Signature: ______________________________     Date: ______________');
-  body.appendParagraph('');
-  body.appendParagraph('QC / TL Signature: ______________________________     Date: ______________');
+  body.replaceText('{{Employee Name}}', record.EmployeeName || '');
+  body.replaceText('{{Title/Position:}}', record.Position || '');
+  body.replaceText('{{Incident Date}}', formatIncidentDate_(record.IncidentDate));
+  body.replaceText('{{Level of Impact on the Company}}', record.ImpactLevel || '');
+  body.replaceText('{{Sanction Type}}', record.SanctionType || '');
+  body.replaceText('{{Violation Category}}', record.ViolationCategory || '');
+  body.replaceText('{{Error Class}}', record.ErrorClass || '');
+  body.replaceText('{{Error Category}}', record.ErrorCategory || '');
+  body.replaceText('{{Order ID}}', String(record.OrderID || ''));
+  body.replaceText('{{SN}}', record.Client || '');
+  body.replaceText('{{Feedback}}', record.Feedback || '');
+  body.replaceText('{{Others}}', record.RootCause || '');
 
   doc.saveAndClose();
 
-  const file = DriveApp.getFileById(doc.getId());
-  folder.addFile(file);
-  DriveApp.getRootFolder().removeFile(file);
+  const pdfFile = folder.createFile(copy.getAs(MimeType.PDF)).setName(fileName + '.pdf');
+  copy.setTrashed(true);
 
-  const url = file.getUrl();
+  const url = pdfFile.getUrl();
   const docCol = ES_HEADERS.indexOf('DocLink') + 1;
   const rowIndex = entries.findIndex(e => Number(e.ID) === Number(esId)) + 2;
   sheet.getRange(rowIndex, docCol).setValue(url);
 
-  return { success: true, url: url, fileName: fileName };
+  return { success: true, url: url, fileName: fileName + '.pdf' };
 }

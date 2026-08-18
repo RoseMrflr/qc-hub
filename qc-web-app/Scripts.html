@@ -647,8 +647,8 @@ function archiveClosedEntries() {
         <td>${escapeHtml(r.ErrorClass)}</td>
         <td><span class="badge ${badgeClass(r.Status)}">${escapeHtml(r.Status)}</span></td>
         <td>${r.DocLink
-            ? `<a class="link" href="${escapeHtml(r.DocLink)}" target="_blank">Open Doc</a>`
-            : `<button class="secondary" onclick="generateDoc(${r.ID}, this)">Generate Doc</button>`}
+            ? `<a class="link" href="${escapeHtml(r.DocLink)}" target="_blank">Open PDF</a>`
+            : `<button class="secondary" onclick="generateDoc(${r.ID}, this)">Generate PDF</button>`}
         </td>
       </tr>`).join('') + `</tbody></table>`;
     document.getElementById('esTableWrap').innerHTML = html;
@@ -660,10 +660,10 @@ function archiveClosedEntries() {
     google.script.run
       .withSuccessHandler(res => {
         if (res.success) { loadEsTable(); }
-        else { btnEl.disabled = false; btnEl.textContent = 'Generate Doc'; alert('Could not generate doc: ' + res.error); }
+        else { btnEl.disabled = false; btnEl.textContent = 'Generate PDF'; alert('Could not generate PDF: ' + res.error); }
       })
       .withFailureHandler(err => {
-        btnEl.disabled = false; btnEl.textContent = 'Generate Doc';
+        btnEl.disabled = false; btnEl.textContent = 'Generate PDF';
         alert('Error: ' + (err.message || err));
       })
       .createIncidentDoc(id);
