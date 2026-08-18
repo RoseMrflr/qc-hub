@@ -1,53 +1,39 @@
 <section id="tasks" class="page active">
-    <div class="card" style="display:flex;justify-content:flex-end">
-        <button class="primary" onclick="openAddModal()">+ Add Entry</button>
+    <div class="tasks-split">
+      <div class="tasks-sidebar">
+        <div class="card">
+          <div class="stat-grid" id="statGrid">
+            <div class="spinner">Loading…</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cal-panel-header">
+            <span class="cal-panel-title">Calendar</span>
+            <div class="cal-panel-nav">
+              <button class="cal-nav-btn" onclick="calShiftMonth(-1)">&lsaquo;</button>
+              <span id="calMonthLabel"></span>
+              <button class="cal-nav-btn" onclick="calShiftMonth(1)">&rsaquo;</button>
+            </div>
+          </div>
+          <table class="cal-table" id="calGrid"></table>
+          <div class="chip-row hidden" id="calLegend"></div>
+          <div class="msg hidden" id="calFilterMsg"></div>
+        </div>
+      </div>
+
+      <div class="card tasks-split-entries">
+        <div class="toolbar">
+          <h2 style="margin:0">Entries</h2>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="primary" onclick="openAddModal()">+ Add Entry</button>
+            <button class="secondary btn-sm" id="overdueToggleBtn" onclick="toggleOverdueOnly()">Show overdue only</button>
+            <button class="secondary btn-sm" onclick="loadDashboard()">Refresh</button>
+            <button class="secondary btn-sm" id="archiveClosedBtn" onclick="archiveClosedEntries()">Archive Closed Entries</button>
+          </div>
+        </div>
+        <p class="muted">Click any row to edit it. Overdue items are pinned to the top.</p>
+        <div id="entriesTableWrap" class="tasks-split-scroll"><span class="spinner">Loading…</span></div>
+      </div>
     </div>
-                              
-                                <div class="tasks-split">
-                                    <div class="tasks-sidebar">
-                                          <div class="card">
-                                                  <div class="stat-grid" id="statGrid">
-                                                            <div class="spinner">Loading…</div>
-                                                                    </div>
-                                                                          </div>
-                                                                          
-                                                                                <div class="card">
-                                                                                        <div class="cal-panel-header">
-                                                                                                  <span class="cal-panel-title">Calendar</span>
-                                                                                                            <div class="cal-panel-nav">
-                                                                                                                        <button class="cal-nav-btn" onclick="calShiftMonth(-1)">&lsaquo;</button>
-                                                                                                                                    <span id="calMonthLabel"></span>
-                                                                                                                                                <button class="cal-nav-btn" onclick="calShiftMonth(1)">&rsaquo;</button>
-                                                                                                                                                          </div>
-                                                                                                                                                                  </div>
-                                                                                                                                                                          <table class="cal-table" id="calGrid"></table>
-                                                                                                                                                                                  <div class="chip-row hidden" id="calLegend"></div>
-                                                                                                                                                                                          <div class="msg hidden" id="calFilterMsg"></div>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    
-                                                                                                                                                                                                        <div class="card tasks-split-entries">
-                                                                                                                                                                                                              <div class="toolbar">
-                                                                                                                                                                                                                      <h2 style="margin:0">Entries</h2>
-                                                                                                                                                                                                                              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                                                                                                                                                                                                                                                                                                          <button class="secondary btn-sm" id="overdueToggleBtn" onclick="toggleOverdueOnly()">Show overdue only</button>
-                                                                                                                                                                                                                                                                                                                    <button class="secondary btn-sm" onclick="loadDashboard()">Refresh</button>
-<label class="muted" style="margin:0">Bulk archive</label>
-<select id="bulkArchiveSelect" onchange="toggleBulkArchiveWeekInput()" style="width:auto">
-<option value="">Choose…</option>
-<option value="thisweek">This Week</option>
-<option value="thismonth">This Month</option>
-<option value="weeknum">Week #…</option>
-<option value="allcompleted">All Completed</option>
-</select>
-<span id="bulkArchiveWeekWrap" class="hidden" style="display:inline-flex;align-items:center;gap:4px">
-<input type="number" id="bulkArchiveWeekNum" min="1" max="53" placeholder="Wk#" style="width:60px;padding:6px 8px">
-</span>
-<button class="secondary btn-sm" id="bulkArchiveBtn" onclick="bulkArchive()">Archive Matching</button>
-                                                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                                                                        <p class="muted">Click any row to edit it. Overdue items are pinned to the top.</p>
-                                                                                                                                                                                                                                                                                                                                              <div id="entriesTableWrap" class="tasks-split-scroll"><span class="spinner">Loading…</span></div>
-                                                                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                    </section>
+  </section>

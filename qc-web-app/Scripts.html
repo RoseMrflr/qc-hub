@@ -20,6 +20,12 @@
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
+  function fmtDateLabel_(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+  }
   function isOverdue(e) {
     return !!(e.DueDate && e.DueDate < todayStr_() && OPEN_STATUSES.includes(e.Status));
   }
@@ -250,9 +256,10 @@
   const ENTRY_COLS_ = ['Date','Type','Topic','Person','Details','Issues','GoalsActionItems','DueDate','Status','Link'];
   const ENTRY_COL_LABELS_ = {Date:'Date',Type:'Type',Topic:'Topic',Person:'Person',Details:'Details',Issues:'Issues',GoalsActionItems:'Goals / Action Items',DueDate:'Due',Status:'Status',Link:'Link'};
   const SORTABLE_COLS_ = ['Date','Type','Person'];
-  const FILTERABLE_COLS_ = ['Type','Person','Status'];
+  const FILTERABLE_COLS_ = ['Date','Type','Person','Status'];
+  const MONTH_NAMES_ = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   let sortState = {key:'Date', dir:'desc'};
-  let columnFilters = {}; // col -> Set of allowed values (absent = no filter on that col)
+  let columnFilters = {}; // col -> Set of allowed values (Date -> {years:Set, months:Set}); absent = no filter
   let activeFilterMenu = null;
 
   function onHeaderSortClick_(key) {
@@ -265,6 +272,13 @@
     return Array.from(new Set(ALL_ENTRIES.filter(e => !e.Archived).map(e => e[col] || '').filter(v => v !== ''))).sort();
   }
 
+  function distinctDateParts_() {
+    const dates = ALL_ENTRIES.filter(e => !e.Archived && e.Date).map(e => e.Date);
+    const years = Array.from(new Set(dates.map(d => d.slice(0, 4)))).sort();
+    const months = Array.from(new Set(dates.map(d => d.slice(5, 7)))).sort();
+    return {years: years, months: months};
+  }
+
   function closeColumnFilterMenu_() {
     if (activeFilterMenu) { activeFilterMenu.remove(); activeFilterMenu = null; }
   }
@@ -274,21 +288,46 @@
     closeColumnFilterMenu_();
     if (wasOpenForCol) return;
 
-    const values = distinctColumnValues_(col);
-    const selected = columnFilters[col];
     const menu = document.createElement('div');
     menu.className = 'col-filter-menu';
     menu.dataset.col = col;
-    menu.innerHTML =
-      '<div class="col-filter-actions">' +
-        '<button type="button" class="link-btn" onclick="event.stopPropagation();setColumnFilterAll_(\'' + col + '\',true)">All</button>' +
-        '<button type="button" class="link-btn" onclick="event.stopPropagation();setColumnFilterAll_(\'' + col + '\',false)">None</button>' +
-      '</div>' +
-      values.map(v => {
-        const checked = !selected || selected.has(v);
-        return '<label class="col-filter-item"><input type="checkbox" data-col="' + col + '" data-val="' + escapeHtml(v) + '" ' + (checked ? 'checked' : '') +
-          ' onclick="event.stopPropagation()" onchange="onColumnFilterCheck_(\'' + col + '\')"> ' + escapeHtml(v) + '</label>';
-      }).join('');
+
+    if (col === 'Date') {
+      const parts = distinctDateParts_();
+      const sel = columnFilters.Date || {};
+      menu.innerHTML =
+        '<div class="col-filter-actions">' +
+          '<button type="button" class="link-btn" onclick="event.stopPropagation();setDateFilterAll_(true)">All</button>' +
+          '<button type="button" class="link-btn" onclick="event.stopPropagation();setDateFilterAll_(false)">None</button>' +
+        '</div>' +
+        '<div class="col-filter-group-label">Year</div>' +
+        parts.years.map(y => {
+          const checked = !sel.years || sel.years.has(y);
+          return '<label class="col-filter-item"><input type="checkbox" data-datepart="year" data-val="' + y + '" ' + (checked ? 'checked' : '') +
+            ' onclick="event.stopPropagation()" onchange="onDateFilterCheck_()"> ' + y + '</label>';
+        }).join('') +
+        '<div class="col-filter-group-label">Month</div>' +
+        parts.months.map(m => {
+          const checked = !sel.months || sel.months.has(m);
+          const label = MONTH_NAMES_[parseInt(m, 10) - 1] || m;
+          return '<label class="col-filter-item"><input type="checkbox" data-datepart="month" data-val="' + m + '" ' + (checked ? 'checked' : '') +
+            ' onclick="event.stopPropagation()" onchange="onDateFilterCheck_()"> ' + label + '</label>';
+        }).join('');
+    } else {
+      const values = distinctColumnValues_(col);
+      const selected = columnFilters[col];
+      menu.innerHTML =
+        '<div class="col-filter-actions">' +
+          '<button type="button" class="link-btn" onclick="event.stopPropagation();setColumnFilterAll_(\'' + col + '\',true)">All</button>' +
+          '<button type="button" class="link-btn" onclick="event.stopPropagation();setColumnFilterAll_(\'' + col + '\',false)">None</button>' +
+        '</div>' +
+        values.map(v => {
+          const checked = !selected || selected.has(v);
+          return '<label class="col-filter-item"><input type="checkbox" data-col="' + col + '" data-val="' + escapeHtml(v) + '" ' + (checked ? 'checked' : '') +
+            ' onclick="event.stopPropagation()" onchange="onColumnFilterCheck_(\'' + col + '\')"> ' + escapeHtml(v) + '</label>';
+        }).join('');
+    }
+
     document.body.appendChild(menu);
     const rect = ev.currentTarget.getBoundingClientRect();
     menu.style.top = (window.scrollY + rect.bottom + 4) + 'px';
@@ -311,13 +350,38 @@
     onColumnFilterCheck_(col);
   }
 
+  function onDateFilterCheck_() {
+    const parts = distinctDateParts_();
+    const yearBoxes = document.querySelectorAll('.col-filter-menu input[data-datepart="year"]');
+    const monthBoxes = document.querySelectorAll('.col-filter-menu input[data-datepart="month"]');
+    const checkedYears = Array.from(yearBoxes).filter(b => b.checked).map(b => b.dataset.val);
+    const checkedMonths = Array.from(monthBoxes).filter(b => b.checked).map(b => b.dataset.val);
+    const f = {};
+    if (checkedYears.length !== parts.years.length) f.years = new Set(checkedYears);
+    if (checkedMonths.length !== parts.months.length) f.months = new Set(checkedMonths);
+    if (!f.years && !f.months) { delete columnFilters.Date; } else { columnFilters.Date = f; }
+    renderEntriesTable();
+  }
+
+  function setDateFilterAll_(allOn) {
+    document.querySelectorAll('.col-filter-menu input[data-datepart]').forEach(b => { b.checked = allOn; });
+    onDateFilterCheck_();
+  }
+
   function renderEntriesTable() {
     let list = ALL_ENTRIES.filter(e => !e.Archived);
     if (dateFilter) list = list.filter(e => e.Date === dateFilter);
     if (showOverdueOnly) list = list.filter(isOverdue);
     Object.keys(columnFilters).forEach(col => {
       const allowed = columnFilters[col];
-      list = list.filter(e => allowed.has(e[col] || ''));
+      if (col === 'Date') {
+        list = list.filter(e => {
+          const y = (e.Date || '').slice(0, 4), m = (e.Date || '').slice(5, 7);
+          return (!allowed.years || allowed.years.has(y)) && (!allowed.months || allowed.months.has(m));
+        });
+      } else {
+        list = list.filter(e => allowed.has(e[col] || ''));
+      }
     });
 
     const mul = sortState.dir === 'asc' ? 1 : -1;
@@ -383,6 +447,7 @@
 
   function viewCellHtml_(e, col) {
     if (col === 'Status') return `<span class="badge ${badgeClass(e.Status)}">${escapeHtml(e.Status)}</span>`;
+    if (col === 'Date' || col === 'DueDate') return escapeHtml(fmtDateLabel_(e[col]));
     const v = e[col] || '';
     const s = escapeHtml(String(v));
     return s.length > 80 ? s.slice(0, 80) + '…' : s;
@@ -425,50 +490,12 @@
     renderEntriesTable();
   }
 
-function toggleBulkArchiveWeekInput() {
-  const preset = document.getElementById('bulkArchiveSelect').value;
-  const wrap = document.getElementById('bulkArchiveWeekWrap');
-  if (wrap) wrap.classList.toggle('hidden', preset !== 'weeknum');
-}
+function archiveClosedEntries() {
+  const matches = ALL_ENTRIES.filter(e => !e.Archived && isDone(e));
+  if (!matches.length) { alert('No closed entries to archive.'); return; }
+  if (!confirm('Archive ' + matches.length + ' closed ' + (matches.length === 1 ? 'entry' : 'entries') + '?')) return;
 
-function getISOWeekParts_(dateStr) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
-  const dayNum = (date.getUTCDay() + 6) % 7;
-  date.setUTCDate(date.getUTCDate() - dayNum + 3);
-  const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
-  const week = 1 + Math.round((date - firstThursday) / (7 * 24 * 3600 * 1000));
-  return { week: week, year: date.getUTCFullYear() };
-}
-
-function bulkArchive() {
-  const preset = document.getElementById('bulkArchiveSelect').value;
-  if (!preset) { alert('Choose a bulk archive option first.'); return; }
-  let label = '';
-  let matches = ALL_ENTRIES.filter(e => !e.Archived && isDone(e));
-  const today = todayStr_();
-  if (preset === 'thisweek') {
-    const cur = getISOWeekParts_(today);
-    matches = matches.filter(e => { if (!e.Date) return false; const p = getISOWeekParts_(e.Date); return p.week === cur.week && p.year === cur.year; });
-    label = 'This Week';
-  } else if (preset === 'thismonth') {
-    const ym = today.slice(0, 7);
-    matches = matches.filter(e => e.Date && e.Date.slice(0, 7) === ym);
-    label = 'This Month';
-  } else if (preset === 'weeknum') {
-    const wkInput = parseInt(document.getElementById('bulkArchiveWeekNum').value, 10);
-    if (!wkInput || wkInput < 1 || wkInput > 53) { alert('Enter a valid week number (1-53).'); return; }
-    const curYear = getISOWeekParts_(today).year;
-    matches = matches.filter(e => { if (!e.Date) return false; const p = getISOWeekParts_(e.Date); return p.week === wkInput && p.year === curYear; });
-    label = 'Week ' + wkInput;
-  } else if (preset === 'allcompleted') {
-    label = 'All Completed';
-  }
-
-  if (!matches.length) { alert('No entries match "' + label + '".'); return; }
-  if (!confirm('Archive ' + matches.length + ' entries matching "' + label + '"?')) return;
-
-  const btn = document.getElementById('bulkArchiveBtn');
+  const btn = document.getElementById('archiveClosedBtn');
   if (btn) btn.disabled = true;
   const ids = matches.map(e => e.ID);
   let i = 0;
