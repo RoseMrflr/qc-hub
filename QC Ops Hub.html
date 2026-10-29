@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QC Ops Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1F2937; --soft:#6B7280; --rule:#D9D4C5; --desk:#E9E5D8; --paper:#FFFEF9;
+    --red:#DC2626; --green:#059669; --amber:#D97706;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--desk);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1900px;margin:0 auto;padding:20px 20px 60px;}
+  .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .top h1{font-size:18px;font-weight:600;margin:0;}
+  .save{font-size:12px;color:var(--soft);}
+
+  .tabs{display:flex;gap:2px;flex-wrap:wrap;padding-left:8px;}
+  .tab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--soft);background:#DAD5C5;border-radius:8px 8px 0 0;cursor:pointer;user-select:none;}
+  .tab:hover{background:#E2DECF;}
+  .tab.active{background:var(--paper);color:var(--ink);}
+  .tab .n{font-size:11px;color:var(--soft);margin-left:4px;}
+
+  .sheet{background:var(--paper);border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:6px 0 14px;min-height:420px;}
+  .banner{font-size:12px;color:var(--soft);padding:8px 18px;border-bottom:1px solid var(--rule);}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:600;text-align:left;padding:10px 6px 6px;border-bottom:2px solid var(--rule);}
+  th:first-child,td:first-child{padding-left:18px;}
+  td{border-bottom:1px solid var(--rule);padding:0 6px;height:38px;}
+  td input,td select{width:100%;height:36px;border:none;background:transparent;font:inherit;color:inherit;padding:0 2px;border-radius:4px;}
+  td input:hover,td select:hover{background:rgba(0,0,0,.035);}
+  td input:focus,td select:focus{outline:none;background:#FFF8DC;}
+  td.over input[type=date]{color:var(--red);font-weight:600;}
+  tr.new td{background:#FBF8EC;}
+  tr.new input::placeholder{color:#B5B0A0;}
+  .x{border:none;background:none;color:#B5B0A0;cursor:pointer;font-size:16px;width:100%;height:36px;}
+  .x:hover{color:var(--red);}
+  .st-Completed,.st-Closed,.st-Done,.st-Met,.st-Discussed{color:var(--green);}
+  .st-In-Progress,.st-In-progress,.st-Follow-up-needed,.st-Carried-over{color:var(--amber);}
+  .st-Missed{color:var(--red);}
+  .st-Not-started,.st-Pending,.st-Scheduled{color:var(--soft);}
+  .col-date{width:130px;} .col-emp{width:160px;} .col-st{width:120px;} .col-x{width:40px;}
+  .col-notes{width:26%;}
+  input[type=search]{font:inherit;border:1px solid var(--rule);background:var(--paper);border-radius:6px;padding:6px 10px;margin:10px 18px;width:260px;}
+  .empty{padding:30px 18px;color:var(--soft);}
+  td textarea{width:100%;border:none;background:transparent;font:inherit;color:inherit;padding:8px 2px;border-radius:4px;resize:none;overflow:hidden;line-height:1.4;display:block;}
+  td textarea:hover{background:rgba(0,0,0,.035);}
+  td textarea:focus{outline:none;background:#FFF8DC;}
+  tr[data-id] td, tr.new td{vertical-align:top;}
+  td.acts{vertical-align:top;}
+  .col-ref{width:170px;} .col-no{width:46px;}
+  td.no{color:var(--soft);font-variant-numeric:tabular-nums;padding-top:11px;}
+  .addbar{padding:12px 18px 0;}
+  .subtabs{display:flex;gap:6px;padding:12px 18px 0;border-bottom:1px solid var(--rule);}
+  .sub{padding:7px 14px;font-size:13px;font-weight:500;color:var(--soft);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;user-select:none;}
+  .sub.active{color:var(--ink);border-bottom-color:var(--ink);}
+  .stitle{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:600;padding:16px 18px 4px;}
+  .cmain{background:#F6F2E4;padding:14px;}
+  .card{background:var(--paper);border:1px solid var(--rule);border-radius:8px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  /* Long lists scroll inside the card; header stays on top, the add row stays at the bottom */
+  .mini{max-height:300px;overflow-y:auto;}
+  .top2{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:stretch;margin-bottom:14px;}
+  .topl .phead{margin-bottom:0;}
+  .ptabs{display:flex;gap:4px;margin-top:10px;border-bottom:1px solid var(--rule);}
+  .ptab{padding:6px 12px;font-size:13px;font-weight:500;color:var(--soft);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;user-select:none;}
+  .ptab.active{color:var(--ink);border-bottom-color:var(--ink);}
+  .ptab .n{font-size:11px;opacity:.7;margin-left:5px;}
+  .dcard{margin-bottom:0;display:flex;flex-direction:column;}
+  .dcard .pfields{flex:1;padding-top:10px;}
+  .dcard textarea{min-height:76px;height:calc(100% - 22px);}
+  /* Coaching tab fits the window (no page scroll); every card scrolls on its own */
+  .wrap.fit{height:100vh;min-height:640px;display:flex;flex-direction:column;padding-bottom:16px;}
+  .wrap.fit .sheet{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding-bottom:0;}
+  .wrap.fit #coachBody{flex:1;min-height:0;overflow:auto;}
+  .wrap.fit .split{height:100%;min-height:0;}
+  .side{overflow:auto;}
+  .main.cmain{display:flex;flex-direction:column;min-height:0;}
+  .pbody{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:14px;}
+  .pbody .card{margin:0;display:flex;flex-direction:column;min-height:0;}
+  .pbody .mini{flex:1;min-height:0;max-height:none;}
+  .logcard{flex:1;min-height:0;display:flex;flex-direction:column;margin-bottom:0;}
+  #agentLog{flex:1;min-height:0;overflow:auto;}
+  .card.goal{border-top:3px solid #2563EB;} .card.agenda{border-top:3px solid #7C3AED;}
+  .mini-empty{padding:16px 18px;color:var(--soft);font-size:12px;text-align:center;}
+  .wrap.fit #coachBody th{position:sticky;top:0;z-index:3;background:var(--paper);border-bottom:none;box-shadow:inset 0 -2px 0 var(--rule);}
+  .wrap.fit #coachBody tr.new td{position:sticky;top:33px;z-index:2;background:#FBF8EC;box-shadow:inset 0 -1px 0 var(--rule);}
+  @media (max-width:1100px){
+    .top2{grid-template-columns:1fr;}
+    .wrap.fit{height:auto;display:block;}
+    .wrap.fit .sheet{overflow:visible;}
+    .pbody{grid-template-columns:1fr;grid-template-rows:none;}
+    .pbody .mini{max-height:300px;}
+  }
+  /* Details: fixed size, each box scrolls so long text is never cut off */
+  .top2{min-height:182px;}
+  .dcard{contain:size;min-height:0;overflow:hidden;}
+  .dcard .pfields{flex:1;min-height:0;padding-bottom:12px;}
+  .dcard .pfields>div{display:flex;flex-direction:column;min-height:0;}
+  .dcard .pfields textarea{flex:1;min-height:0;height:auto;overflow-y:auto;resize:none;}
+  @media (max-width:1100px){.dcard{contain:none;height:220px;}}
+  /* Dashboard */
+  .dash{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;background:#F6F2E4;padding:14px;}
+  .dhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .dhead h2{margin:0;font-size:18px;} .dhead .dsub{font-size:12px;color:var(--soft);}
+  .dtiles{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap;}
+  .dtiles .tile{min-width:96px;padding:6px 12px;} .dtiles .tile.warn b{color:var(--red);}
+  .dgrid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:10px;}
+  .dgrid .card,.dside .card{margin:0;display:flex;flex-direction:column;min-height:0;}
+  .dwrap{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;}
+  .dmat{min-height:0;display:flex;gap:6px;}
+  .dmat .yax{writing-mode:vertical-rl;display:flex;justify-content:space-around;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);font-weight:600;}
+  .dmat .mcol{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:4px;}
+  .dmat .xax{display:flex;justify-content:space-around;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);font-weight:600;}
+  .dside{min-height:0;display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:14px;}
+  .card.q1{border-top:3px solid var(--red);} .card.q2{border-top:3px solid #2563EB;}
+  .card.q3{border-top:3px solid #D97706;} .card.q4{border-top:3px solid #9CA3AF;}
+  .card .qsub{font-weight:400;font-size:11px;color:var(--soft);margin-left:8px;}
+  .card .card-h .l{display:flex;align-items:baseline;}
+  .card.over{outline:2px dashed var(--ink);outline-offset:-4px;background:#FFFBEA;}
+  .dgrip{flex:none;cursor:grab;color:#B5B0A0;font-size:13px;line-height:1;margin-top:11px;user-select:none;letter-spacing:-2px;width:12px;}
+  .dgrip:hover{color:var(--ink);} .drow.dragging{opacity:.4;}
+  .dlist{flex:1;min-height:0;overflow:auto;}
+  .card.idea{border-top:3px solid #D97706;} .card.chk{border-top:3px solid #2563EB;}
+  .card.due{border-top:3px solid var(--red);} .card.log{border-top:3px solid var(--green);}
+  .dadd{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);background:#FBF8EC;align-items:flex-start;}
+  .dadd textarea{flex:1;min-width:0;font:inherit;font-size:13px;border:1px solid var(--rule);border-radius:6px;padding:6px 8px;background:var(--paper);resize:none;line-height:1.4;overflow:hidden;}
+  .dadd textarea:focus,.dadd input:focus{outline:none;background:#FFF8DC;}
+  .dadd input[type=date]{font:inherit;font-size:12px;border:1px solid var(--rule);border-radius:6px;padding:5px;background:var(--paper);height:32px;}
+  .dadd .btn{height:32px;}
+  .drow{display:flex;gap:8px;align-items:flex-start;padding:1px 8px 1px 14px;border-bottom:1px solid var(--rule);}
+  .drow textarea{flex:1;min-width:0;border:none;background:transparent;font:inherit;font-size:13px;padding:7px 2px;resize:none;overflow:hidden;line-height:1.4;border-radius:4px;}
+  .drow textarea:hover{background:rgba(0,0,0,.035);} .drow textarea:focus{outline:none;background:#FFF8DC;}
+  .drow .dchk{margin:9px 0 0;width:15px;height:15px;flex:none;accent-color:#2F6B4F;}
+  span.dchk{display:inline-block;}
+  .drow.done textarea{text-decoration:line-through;color:var(--soft);}
+  .drow input.ddate{font:inherit;font-size:12px;border:none;background:transparent;margin-top:3px;width:122px;flex:none;height:30px;color:inherit;border-radius:4px;}
+  .drow input.ddate:hover{background:rgba(0,0,0,.035);}
+  .drow span.ddate{font-size:12px;margin-top:9px;flex:none;width:122px;padding-left:2px;}
+  .ddate.over{color:var(--red);font-weight:600;}
+  .drow .dx{width:24px;height:30px;flex:none;margin-top:3px;}
+  .drow.auto{cursor:pointer;} .drow.auto:hover{background:rgba(0,0,0,.035);}
+  .drow.auto .dtxt{flex:1;padding:8px 2px;font-size:13px;line-height:1.4;}
+  .dtag{background:#EFEAD7;color:var(--soft);margin-left:6px;}
+  .tab .n.od{background:var(--red);color:#fff;border-radius:9px;padding:0 6px;}
+  @media (max-width:1100px){.dwrap{grid-template-columns:1fr;} .dmat{flex-direction:column;} .dmat .yax,.dmat .xax{display:none;} .dgrid{grid-template-columns:1fr;grid-template-rows:none;} .dgrid .card,.dside .card{height:340px;} .dside{grid-template-rows:none;} .wrap.fit .dash{overflow:visible;}}
+  /* Settings + scorecard */
+  .settings{padding:14px;background:#F6F2E4;}
+  .snote{padding:10px 18px;font-size:12px;color:var(--soft);line-height:1.5;border-bottom:1px solid var(--rule);}
+  .stbl td{height:auto;padding:5px 6px;vertical-align:middle;}
+  .stbl td input.surl{width:100%;height:34px;border:1px solid var(--rule);border-radius:6px;background:#FBF8EC;padding:0 8px;font-size:13px;}
+  .stbl td input.surl:focus{outline:none;background:#FFF8DC;}
+  .col-sst{width:150px;}
+  .sok{color:var(--green);font-size:12px;} .sbad{color:var(--red);font-size:12px;} .snone{color:#B5B0A0;font-size:12px;}
+  .sbulk{padding:12px 18px 16px;display:flex;flex-direction:column;gap:8px;}
+  .sbulk textarea{width:100%;min-height:76px;font:inherit;font-size:13px;border:1px solid var(--rule);border-radius:6px;padding:8px;background:#FBF8EC;resize:vertical;}
+  .sbulk label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:600;}
+  .scact{display:flex;gap:8px;align-items:center;font-weight:400;} .scact a{text-decoration:none;}
+  .scbody{flex:1;min-height:0;overflow:auto;}
+  .sctable{width:auto;min-width:100%;table-layout:auto;}
+  .sctable th{position:sticky;top:0;z-index:2;background:var(--paper);box-shadow:inset 0 -2px 0 var(--rule);border-bottom:none;white-space:nowrap;padding:9px 10px;}
+  .sctable td{height:auto;padding:7px 10px;font-size:13px;max-width:280px;vertical-align:top;}
+  .sctable tr:hover td{background:rgba(0,0,0,.025);}
+  .scerr{padding:10px 18px;font-size:12px;color:var(--red);background:#FCE9E9;}
+  /* focus picker in the coaching log */
+  .ftd{padding:0 6px;}
+  .fcell{position:relative;min-height:36px;}
+  .fview{display:flex;gap:6px;align-items:flex-start;padding:8px 20px 8px 2px;line-height:1.4;border-radius:4px;}
+  .fcell:hover .fview{background:rgba(0,0,0,.035);}
+  .fcell:focus-within .fview{background:#FFF8DC;}
+  .ftxt.ph{color:#B5B0A0;}
+  .caret{position:absolute;right:6px;top:8px;font-size:13px;line-height:1;color:var(--soft);}
+  .fcell select.fsel{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+  .ftag{flex:none;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;border-radius:4px;padding:2px 6px;margin-top:2px;}
+  .ft-Strength{background:#E4F5EF;color:#065F46;} .ft-Weakness{background:#FCE9E9;color:#991B1B;}
+  .ft-Goal{background:#E3EBFD;color:#1D4ED8;} .ft-Agenda{background:#F1EAFD;color:#6D28D9;}
+  .ptabs .grow{flex:1;}
+  .mf{display:flex;align-items:center;gap:6px;padding-bottom:3px;}
+  .mfl{font-size:11px;color:var(--soft);}
+  .mf input{font:inherit;font-size:12px;border:1px solid var(--rule);border-radius:6px;padding:3px 6px;background:var(--paper);}
+  .card-h .cnt:empty{display:none;}
+  .mini th{position:sticky;top:0;z-index:2;background:var(--paper);border-bottom:none;box-shadow:inset 0 -2px 0 var(--rule);}
+  .mini tr.new td{background:#FBF8EC;}
+  .mini td{height:auto;padding-top:1px;padding-bottom:1px;}
+  .mini td textarea{padding:6px 2px;font-size:13px;}
+  .mini td input,.mini td select{height:30px;font-size:13px;}
+  .mini td.no{padding-top:8px;}
+  .card-h{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;border-bottom:1px solid var(--rule);font-size:13px;font-weight:600;}
+  .card-h .cnt{font-weight:500;color:var(--soft);font-size:11px;background:#EFEAD7;border-radius:10px;padding:1px 8px;}
+  .card.good{border-top:3px solid var(--green);} .card.bad{border-top:3px solid var(--red);}
+  .phead{display:flex;gap:16px;align-items:center;margin-bottom:14px;}
+  .phead h2{margin:0 0 8px;font-size:20px;}
+  .avatar{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#E4DDC4;color:var(--ink);font-size:11px;font-weight:600;margin-right:8px;flex-shrink:0;}
+  .avatar.big{width:64px;height:64px;font-size:22px;margin:0;}
+  .agn{display:flex;align-items:center;min-width:0;}
+  .tiles{display:flex;gap:10px;flex-wrap:wrap;}
+  .tile{background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:8px 14px;min-width:110px;}
+  .tile b{display:block;font-size:16px;font-weight:600;} .tile span{font-size:11px;color:var(--soft);}
+  .tile.warn b{color:var(--amber);}
+  .pfields.one{grid-template-columns:1fr 1fr;padding-top:12px;}
+  .monthbar{display:flex;gap:8px;align-items:center;padding:14px 18px 0;}
+  .monthbar input{font:inherit;border:1px solid var(--rule);border-radius:6px;padding:5px 8px;background:var(--paper);}
+  .mlabel{font-weight:600;margin-left:8px;}
+  .mtable td{vertical-align:top;padding:10px 6px;} .mtable th.col-m{width:240px;}
+  .mtable td textarea{border:1px solid var(--rule);background:#FBF8EC;padding:8px;min-height:60px;}
+  .mline{font-size:12px;color:var(--soft);margin-top:3px;}
+  .aglink{display:inline-flex;align-items:center;cursor:pointer;font-weight:500;}
+  .aglink:hover{text-decoration:underline;}
+  @media (max-width:1100px){.pfields.one{grid-template-columns:1fr;}}
+  tr[data-rid] td{vertical-align:top;}
+  .pfields{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 18px 14px;}
+  .pfields label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:600;}
+  .pfields textarea{display:block;width:100%;margin-top:4px;font:inherit;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);border:1px solid var(--rule);border-radius:6px;background:#FBF8EC;padding:8px;resize:none;overflow:hidden;line-height:1.4;min-height:60px;}
+  .pfields textarea:focus{outline:none;background:#FFF8DC;}
+  .side .addag{width:calc(100% - 24px);margin:4px 12px 8px;font:inherit;font-size:12px;border:1px solid var(--rule);border-radius:6px;padding:6px 8px;background:#FBF8EC;}
+  .toolbar{display:flex;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--rule);}
+  .toolbar select{border:1px solid var(--rule);background:var(--paper);font:inherit;border-radius:6px;padding:5px 8px;}
+  .toolbar .hint{flex:1;}
+  .btn{font:inherit;font-size:13px;border:1px solid var(--rule);background:var(--paper);border-radius:6px;padding:5px 12px;cursor:pointer;}
+  .btn:hover{background:#F1ECD9;}
+  .hint{font-size:12px;color:#B5B0A0;}
+  .col-img{width:210px;} .col-act{width:76px;}
+  td.imgs{vertical-align:middle;padding:3px 6px;height:auto;}
+  td.imgs:focus{outline:none;background:#FFF8DC;}
+  .rctl{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap;}
+  .rmini{font:inherit;font-size:11px;border:1px solid var(--rule);background:var(--paper);border-radius:5px;padding:1px 7px;cursor:pointer;color:var(--soft);}
+  .rmini:hover{background:#F1ECD9;color:var(--ink);}
+  .rmini:disabled{opacity:.4;cursor:default;background:var(--paper);}
+  .linkin{font:inherit;font-size:12px;border:1px solid var(--rule);border-radius:5px;padding:3px 6px;width:150px;background:#FFF8DC;}
+  .rchip{position:relative;display:inline-block;margin:2px 4px 2px 0;padding:2px 8px;border:1px solid var(--rule);border-radius:12px;font-size:12px;background:#FBF8EC;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;}
+  .rchip a{color:var(--ink);text-decoration:none;}
+  .rchip a:hover{text-decoration:underline;}
+  .rchip button{display:none;margin-left:4px;border:none;background:none;color:var(--soft);cursor:pointer;padding:0;}
+  .rchip:hover button{display:inline;}
+  .th{position:relative;display:inline-block;margin:2px 4px 2px 0;}
+  .th img{height:34px;border:1px solid var(--rule);border-radius:4px;cursor:zoom-in;display:block;}
+  .th button{position:absolute;top:-6px;display:none;border:none;border-radius:50%;width:16px;height:16px;line-height:16px;font-size:11px;padding:0;cursor:pointer;background:var(--ink);color:#fff;}
+  .th button[data-cp]{left:-4px;} .th button[data-rm]{right:-4px;}
+  .th:hover button{display:block;}
+  td.acts{white-space:nowrap;} td.acts .x{display:inline-block;width:32px;}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .15s;}
+  #toast.show{opacity:1;}
+  .lightbox{position:fixed;inset:0;background:rgba(20,20,20,.8);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .lightbox img{max-width:90vw;max-height:84vh;border-radius:6px;background:#fff;}
+  .lb-bar{position:absolute;top:16px;right:20px;display:flex;gap:8px;}
+  .split{display:flex;min-height:400px;}
+  .side{width:200px;flex-shrink:0;border-right:1px solid var(--rule);padding:8px 0;}
+  .ag{display:flex;justify-content:space-between;padding:8px 18px;cursor:pointer;font-size:13px;}
+  .ag:hover{background:rgba(0,0,0,.035);}
+  .ag.active{background:#F1ECD9;font-weight:600;}
+  .ag .n{color:var(--soft);font-weight:400;}
+  .main{flex:1;min-width:0;}
+  .prof{padding:12px 18px 8px;}
+  .prof h2{margin:0 0 8px;font-size:18px;}
+  .chip{display:inline-block;font-size:12px;border:1px solid var(--rule);border-radius:20px;padding:2px 10px;margin:0 6px 4px 0;background:#FBF8EC;}
+  .arch{font-size:11px;color:var(--soft);margin-left:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>QC Ops Hub</h1>
+    <span class="save" id="saveStatus">Saved</span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+// Tab label -> category key stored in data (keys unchanged so older data still lines up)
+const TABS = [
+  {label:'Tasks',          cat:'🗓️ Admin Tasks'},
+  {label:'Client Clarification', cat:'🚨 ES Tracker'},
+  {label:'Coaching',       cat:'💬 C&M'}, // C&M = Coaching
+  {label:'T&D',            cat:'📚 T&D'},
+  {label:'Clarifications', cat:'❓ Clarifications'},
+  {label:'Projects',       cat:'🗂️ Projects'}
+];
+const STATUSES = ['Open','In Progress','Scheduled','Completed','Closed'];
+const DONE = ['Completed','Closed','Resolved'];
+
+const store = {
+  async get(k){
+    if(window.storage) return window.storage.get(k, true);
+    const v = localStorage.getItem(k); return v==null ? null : {value:v};
+  },
+  async set(k, v){
+    if(window.storage) return window.storage.set(k, v, true);
+    localStorage.setItem(k, v);
+  }
+};
+
+const stc = s => 'st-' + String(s||'').trim().replace(/\s+/g, '-');   // status -> css class
+const todayISO = () => new Date().toISOString().slice(0,10);
+const uid = () => 't'+Math.random().toString(36).slice(2,10);
+const esc = s => (s+'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let tasks = [], archive = [], meta = {lastRecurCheck:null};
+let current = 'Dashboard';
+let recurMsg = '';
+
+async function load(key, fallback){
+  try{ const r = await store.get(key); return r ? JSON.parse(r.value) : fallback; }
+  catch(e){ return fallback; }
+}
+async function save(key, val){
+  const s = document.getElementById('saveStatus');
+  s.textContent = 'Saving...';
+  try{ await store.set(key, JSON.stringify(val)); s.textContent = 'Saved'; }
+  catch(e){ s.textContent = 'Save failed (storage full?)'; }
+}
+const saveTasks = () => save('qc-tasks', tasks);
+
+// Recurring: Monthly Report on the 1st, Weekly Calibration every Friday
+function fridaysBetween(a, b){
+  const out=[]; let d=new Date(a+'T00:00:00'); const end=new Date(b+'T00:00:00');
+  while(d.getDay()!==5) d.setDate(d.getDate()+1);
+  for(; d<=end; d.setDate(d.getDate()+7)) out.push(d.toISOString().slice(0,10));
+  return out;
+}
+function firstsBetween(a, b){
+  const out=[]; let d=new Date(a+'T00:00:00'); d=new Date(d.getFullYear(), d.getMonth(), 1);
+  const end=new Date(b+'T00:00:00');
+  for(; d<=end; d.setMonth(d.getMonth()+1)) out.push(d.toISOString().slice(0,10));
+  return out;
+}
+async function recurringCatchUp(){
+  const today = todayISO(), start = meta.lastRecurCheck || '2026-01-01';
+  if(start > today) return 0;
+  let added = 0;
+  for(const d of firstsBetween(start, today)){
+    if(!tasks.some(x=>x.date===d && x.task==='Monthly Report')){
+      tasks.push({id:uid(), date:d, category:'🗓️ Admin Tasks', type:'Admin Task', task:'Monthly Report', employee:'', status:'Scheduled', notes:''}); added++;
+    }
+  }
+  for(const d of fridaysBetween(start, today)){
+    if(!tasks.some(x=>x.date===d && x.task==='Weekly Calibration')){
+      tasks.push({id:uid(), date:d, category:'📚 T&D', type:'Calibration', task:'Weekly Calibration', employee:'', status:'Scheduled', notes:''}); added++;
+    }
+  }
+  meta.lastRecurCheck = today;
+  if(added) await saveTasks();
+  await save('qc-meta', meta);
+  return added;
+}
+
+async function archiveDone(){
+  const done = tasks.filter(t=>DONE.includes(t.status));
+  if(!done.length) return;
+  done.forEach(t=>archive.push({...t, archivedOn: todayISO()}));
+  tasks = tasks.filter(t=>!DONE.includes(t.status));
+  await saveTasks(); await save('qc-archive', archive);
+}
+
+function renderTabs(){
+  const el = document.getElementById('tabs');
+  const names = ['Dashboard'].concat(TABS.map(t=>t.label), 'Agents', 'Archive', 'Settings');
+  el.innerHTML = names.map(n=>{
+    const t = TABS.find(x=>x.label===n);
+    const overdue = tasks.filter(x=>!DONE.includes(x.status) && x.date<todayISO()).length;
+    const count = t ? tasks.filter(x=>x.category===t.cat).length : n==='Agents' ? agentList().length : n==='Archive' ? archive.length : 0;
+    const badge = n==='Dashboard' ? (overdue ? `<span class="n od" title="Overdue">${overdue}</span>` : '') : `<span class="n">${count||''}</span>`;
+    return `<div class="tab ${n===current?'active':''}" data-tab="${n}">${n}${badge}</div>`;
+  }).join('');
+  el.querySelectorAll('.tab').forEach(x=>x.onclick=()=>{ current=x.dataset.tab; newRes = []; newFocus = null; render(); });
+}
+
+// ---------- Escalations helpers: copy + pasted images ----------
+let escFilter = 'All';
+let newRes = [];             // resources added to the blank row, not yet saved
+const ESC_STATUSES = ['Open','Sent to Jen','Pending Reply','In Progress','Resolved','Closed'];
+
+function toast(msg){
+  let t = document.getElementById('toast');
+  if(!t){ t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+const fmtLong = iso => new Date(iso+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+// What gets copied: clarification, ref, screenshots only. `n` numbers the item (1. 2. 3.) in Copy all.
+function escText(t, n){
+  const lead = n ? `${n}. ` : '';
+  const links = resOf(t).filter(r=>r.k==='link').map(r=>r.url);
+  return lead + [t.task||'', t.notes && `Ref: ${t.notes}`, ...links].filter(Boolean).join('\n');
+}
+function escHtml(t, n){
+  const body = esc(t.task||'').replace(/\n/g,'<br>')
+    + (t.notes ? `<br>Ref: ${esc(t.notes)}` : '')
+    + resOf(t).filter(r=>r.k==='link').map(r=>`<br><a href="${esc(r.url)}">${esc(r.url)}</a>`).join('')
+    + resOf(t).filter(r=>r.k==='img').map(r=>`<br><img src="${r.src}" style="max-width:640px">`).join('');
+  // Number is plain text; items are divs (not <p>) because paste targets strip paragraph margins
+  return `<div>${n ? n+'. ' : ''}${body}</div>`;
+}
+async function copyRich(text, html){
+  try{
+    if(window.ClipboardItem && html){
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/plain': new Blob([text],{type:'text/plain'}),
+        'text/html':  new Blob([html],{type:'text/html'})
+      })]);
+    } else { await navigator.clipboard.writeText(text); }
+    toast('Copied');
+  }catch(e){
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    let ok = false; try{ ok = document.execCommand('copy'); }catch(_){}
+    ta.remove(); toast(ok ? 'Copied (text only)' : 'Copy blocked by the browser');
+  }
+}
+async function copyImage(src){
+  try{
+    const img = new Image(); img.src = src; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext('2d').drawImage(img,0,0);
+    const blob = await new Promise(r=>c.toBlob(r,'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+    toast('Image copied');
+  }catch(e){ toast('Could not copy the image'); }
+}
+// Shrink screenshots so localStorage doesn't fill up
+async function shrink(file, max=1200){
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, max/Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width*k); c.height = Math.round(bmp.height*k);
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(bmp,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+function showImage(src){
+  const o = document.createElement('div'); o.className = 'lightbox';
+  o.innerHTML = `<div class="lb-bar"><button class="btn">Copy image</button><button class="btn">Close</button></div><img src="${src}">`;
+  const close = ()=>{ o.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = e=>{ if(e.key==='Escape') close(); };
+  o.onclick = e=>{ if(e.target===o) close(); };
+  o.querySelectorAll('button')[0].onclick = ()=>copyImage(src);
+  o.querySelectorAll('button')[1].onclick = close;
+  document.addEventListener('keydown', onKey);
+  document.body.appendChild(o);
+}
+// ---------- Resources: pasted images, links, uploaded files ----------
+// A task's resources live in t.res = [{k:'img',src} | {k:'link',url} | {k:'file',name,data}]
+function resOf(t){
+  if(t.imgs){ t.res = (t.res||[]).concat(t.imgs.map(src=>({k:'img',src}))); delete t.imgs; }
+  return t.res || (t.res = []);
+}
+const URL_RE = /^(https?:\/\/|www\.)\S+$/i;
+function normUrl(u){ u = u.trim(); return /^https?:\/\//i.test(u) ? u : 'https://'+u; }
+function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } }
+const MAX_FILE = 1.5*1024*1024;
+
+function resCellHtml(list){
+  const items = list.map((r,i)=>{
+    const rm = `<button data-rm="${i}" title="Remove">×</button>`;
+    if(r.k==='img')  return `<span class="th"><img src="${r.src}" data-i="${i}" title="Click to enlarge"><button data-cp="${i}" title="Copy image">⧉</button>${rm}</span>`;
+    if(r.k==='link') return `<span class="rchip"><a href="${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.url)}">🔗 ${esc(hostOf(r.url))}</a>${rm}</span>`;
+    return `<span class="rchip"><a href="${r.data}" download="${esc(r.name)}" title="Download ${esc(r.name)}">📎 ${esc(r.name)}</a>${rm}</span>`;
+  }).join('');
+  return items + `<span class="rctl"><button class="rmini" data-addlink>+ Link</button><button class="rmini" data-upload>Upload</button>`
+    + `<span class="hint">${list.length?'':'or click here, Ctrl+V'}</span></span>`;
+}
+// Wire a resources cell. `list()` returns the live array, `changed()` persists and redraws.
+function bindResCell(td, list, changed){
+  td.innerHTML = resCellHtml(list());
+  td._api = {list, changed};
+  td.querySelectorAll('img').forEach(im=>im.onclick = ()=>showImage(list()[+im.dataset.i].src));
+  td.querySelectorAll('[data-cp]').forEach(b=>b.onclick = e=>{ e.stopPropagation(); copyImage(list()[+b.dataset.cp].src); });
+  td.querySelectorAll('[data-rm]').forEach(b=>b.onclick = e=>{ e.stopPropagation(); list().splice(+b.dataset.rm,1); changed(); });
+
+  // + Link: inline input, no popup
+  td.querySelector('[data-addlink]').onclick = e=>{
+    e.stopPropagation();
+    const ctl = td.querySelector('.rctl');
+    ctl.innerHTML = '<input class="linkin" type="text" placeholder="Paste link, Enter">';
+    const inp = ctl.firstChild; inp.focus();
+    let finished = false;
+    const done = ok=>{
+      if(finished) return; finished = true;
+      const v = inp.value.trim();
+      if(ok && v){ list().push({k:'link', url:normUrl(v)}); changed(); } else { bindResCell(td, list, changed); }
+    };
+    inp.onkeydown = ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); ev.stopPropagation(); done(true); } if(ev.key==='Escape') done(false); };
+    inp.onblur = ()=>done(true);
+  };
+  // Upload: any file; images get shrunk, other files capped for now (Drive comes later)
+  td.querySelector('[data-upload]').onclick = e=>{
+    e.stopPropagation();
+    const fi = document.createElement('input'); fi.type = 'file'; fi.multiple = true;
+    fi.onchange = async ()=>{
+      for(const f of fi.files){
+        if(f.type.startsWith('image/')) list().push({k:'img', src: await shrink(f)});
+        else if(f.size > MAX_FILE) toast(f.name+' is over 1.5 MB. Paste a link for now.');
+        else list().push({k:'file', name:f.name, data: await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(f); })});
+      }
+      changed();
+    };
+    fi.click();
+  };
+}
+
+// Paste while a resources cell (or its row) has focus: image -> image, URL text -> link
+document.addEventListener('paste', async e=>{
+  const ae = document.activeElement;
+  const td = ae?.closest?.('tr')?.querySelector('td.imgs');
+  if(!td || !td._api) return;
+  const item = [...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
+  if(item){
+    e.preventDefault();
+    td._api.list().push({k:'img', src: await shrink(item.getAsFile())});
+    td._api.changed(); toast('Image added');
+    return;
+  }
+  // links only when the cell itself is focused, so normal text pasting in other fields is untouched
+  if(ae === td){
+    const parts = (e.clipboardData.getData('text')||'').trim().split(/\s+/).filter(Boolean);
+    if(parts.length && parts.every(p=>URL_RE.test(p))){
+      e.preventDefault();
+      parts.forEach(p=>td._api.list().push({k:'link', url:normUrl(p)}));
+      td._api.changed(); toast('Link added');
+    }
+  }
+});
+function refreshNewCell(td){
+  bindResCell(td, ()=>newRes, ()=>refreshNewCell(td));
+}
+function refreshRowCell(td, t){
+  bindResCell(td, ()=>resOf(t), async ()=>{ await saveTasks(); refreshRowCell(td, t); });
+}
+
+function autosize(ta){ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }
+
+// ---------- Main sheet ----------
+function render(){
+  document.querySelector('.wrap').classList.toggle('fit', current==='Coaching' || current==='Dashboard');
+  renderTabs();
+  const sheet = document.getElementById('sheet');
+  if(current==='Dashboard'){ renderDashboard(sheet); return; }
+  if(current==='Settings'){ renderSettings(sheet); return; }
+  if(current==='Archive'){ renderArchive(sheet); return; }
+  if(current==='Agents'){ renderAgents(sheet); return; }
+  if(current==='Coaching'){ renderCoaching(sheet); return; }
+
+  const isEsc = current==='Client Clarification';
+  const cat = TABS.find(t=>t.label===current).cat;
+  const today = todayISO();
+  const statuses = isEsc ? ESC_STATUSES : STATUSES;
+  let rows = tasks.filter(t=>t.category===cat).sort((a,b)=>a.date.localeCompare(b.date));
+  if(isEsc && escFilter!=='All') rows = rows.filter(t=>t.status===escFilter);
+  const openRows = tasks.filter(t=>t.category===cat && t.status==='Open').sort((a,b)=>a.date.localeCompare(b.date));
+  const statusOpts = sel => (statuses.includes(sel)?statuses:statuses.concat(sel)).map(s=>`<option ${s===sel?'selected':''}>${s}</option>`).join('');
+
+  const toolbar = isEsc ? `<div class="toolbar">
+      <select id="escFilter">${['All'].concat(ESC_STATUSES).map(s=>`<option ${s===escFilter?'selected':''}>${s}</option>`).join('')}</select>
+      <span class="hint">${rows.length} shown</span>
+      <button class="btn" id="copyAll">Copy all open (${openRows.length})</button>
+    </div>` : '';
+
+  sheet.innerHTML = (recurMsg && current==='Tasks' ? `<div class="banner">${recurMsg}</div>` : '') + toolbar + `
+    <datalist id="agents">${agentList().map(a=>`<option value="${esc(a.name)}">`).join('')}</datalist>
+    <table>
+      <thead><tr>
+        ${isEsc
+          ? '<th class="col-no">#</th><th class="col-date">Date</th><th>Client clarification</th><th class="col-ref">Ref</th><th class="col-img">Resources</th><th>Client response</th><th class="col-st">Status</th><th class="col-act"></th>'
+          : '<th class="col-date">Date</th><th>Task / topic</th><th class="col-emp">Employee</th><th class="col-st">Status</th><th class="col-notes">Notes</th><th class="col-x"></th>'}
+      </tr></thead>
+      <tbody>
+        ${rows.map((t,i)=> isEsc ? `<tr data-id="${t.id}">
+          <td class="no">${i+1}</td>
+          <td class="${t.date<today?'over':''}"><input type="date" data-f="date" value="${t.date}"></td>
+          <td><textarea rows="1" data-f="task">${esc(t.task||t.type||'')}</textarea></td>
+          <td><textarea rows="1" data-f="notes">${esc(t.notes||'')}</textarea></td>
+          <td class="imgs" tabindex="0"></td>
+          <td><textarea rows="1" data-f="response">${esc(t.response||'')}</textarea></td>
+          <td><select data-f="status" class="${stc(t.status)}">${statusOpts(t.status)}</select></td>
+          <td class="acts"><button class="x" title="Copy this clarification" data-copy>⧉</button><button class="x" title="Delete" data-del>×</button></td>
+        </tr>` : `<tr data-id="${t.id}">
+          <td class="${t.date<today?'over':''}"><input type="date" data-f="date" value="${t.date}"></td>
+          <td><input type="text" data-f="task" value="${esc(t.task||t.type||'')}"></td>
+          <td><input type="text" data-f="employee" list="agents" value="${esc(t.employee||'')}"></td>
+          <td><select data-f="status" class="${stc(t.status)}">${statusOpts(t.status)}</select></td>
+          <td><input type="text" data-f="notes" value="${esc(t.notes||'')}"></td>
+          <td><button class="x" title="Delete" data-del>×</button></td>
+        </tr>`).join('')}
+        ${isEsc ? `<tr class="new">
+          <td class="no"></td>
+          <td><input type="date" id="n-date" value="${today}"></td>
+          <td><textarea rows="1" id="n-task" placeholder="Type the clarification here. Enter to add, Shift+Enter for a new line"></textarea></td>
+          <td><textarea rows="1" id="n-notes" placeholder="Ref"></textarea></td>
+          <td class="imgs" tabindex="0"></td>
+          <td><textarea rows="1" id="n-response" placeholder="Client response"></textarea></td>
+          <td><select id="n-status">${statusOpts('Open')}</select></td>
+          <td></td>
+        </tr>` : `<tr class="new">
+          <td><input type="date" id="n-date" value="${today}"></td>
+          <td><input type="text" id="n-task" placeholder="Type here, press Enter..."></td>
+          <td><input type="text" id="n-employee" list="agents" placeholder="Employee"></td>
+          <td><select id="n-status">${statusOpts('Open')}</select></td>
+          <td><input type="text" id="n-notes" placeholder="Notes"></td>
+          <td></td>
+        </tr>`}
+      </tbody>
+    </table>
+    <div class="addbar"><button class="btn" id="addBtn">+ Add another</button></div>`;
+  sheet.querySelectorAll('textarea').forEach(ta=>{ autosize(ta); ta.addEventListener('input', ()=>autosize(ta)); });
+
+  // Edit existing rows in place
+  sheet.querySelectorAll('tbody tr[data-id]').forEach(tr=>{
+    const t = tasks.find(x=>x.id===tr.dataset.id);
+    tr.querySelectorAll('[data-f]').forEach(inp=>{
+      inp.onchange = async ()=>{
+        t[inp.dataset.f] = inp.value;
+        await saveTasks();
+        if(inp.dataset.f==='status'){ await archiveDone(); }
+        if(inp.dataset.f==='status' || inp.dataset.f==='date') render();
+      };
+    });
+    tr.querySelector('[data-del]').onclick = async ()=>{
+      tasks = tasks.filter(x=>x.id!==t.id);
+      await saveTasks(); render();
+    };
+    if(isEsc){
+      refreshRowCell(tr.querySelector('td.imgs'), t);
+      tr.querySelector('[data-copy]').onclick = ()=>copyRich(escText(t, rows.indexOf(t)+1), escHtml(t, rows.indexOf(t)+1));
+    }
+  });
+
+  if(isEsc){
+    refreshNewCell(sheet.querySelector('tr.new td.imgs'));
+    document.getElementById('escFilter').onchange = e=>{ escFilter = e.target.value; render(); };
+    document.getElementById('copyAll').onclick = ()=>{
+      if(!openRows.length){ toast('No open items to copy'); return; }
+      copyRich(openRows.map((t,i)=>escText(t,i+1)).join('\n\n'),
+               openRows.map((t,i)=>escHtml(t,i+1)).join('<div><br></div><div><br></div>'));
+    };
+  }
+
+  // New row: Enter saves
+  const add = async ()=>{
+    const task = document.getElementById('n-task').value.trim();
+    if(!task){ document.getElementById('n-task').focus(); return; }
+    const entry = {
+      id:uid(), category:cat, type:'', task,
+      date:document.getElementById('n-date').value || todayISO(),
+      employee:(document.getElementById('n-employee')||{value:''}).value.trim(),
+      status:document.getElementById('n-status').value,
+      response:(document.getElementById('n-response')||{value:''}).value.trim(),
+      notes:document.getElementById('n-notes').value.trim()
+    };
+    if(isEsc && newRes.length){ entry.res = newRes; newRes = []; }
+    tasks.push(entry);
+    await saveTasks(); await archiveDone();
+    render();
+    document.getElementById('n-task').focus();
+  };
+  sheet.querySelector('tr.new').addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); add(); }
+  });
+  document.getElementById('addBtn').onclick = add;
+}
+
+// ---------- Coaching: Team Huddle + Per Agent profiles ----------
+// Coaching entries stay on the profile (statuses here never move them to Archive).
+const COACH_CAT = '💬 C&M';
+const COACH_STATUSES = ['Scheduled','Done','Follow-up needed'];
+let coachSub = 'huddle', coachAgent = null, coachAgentTab = 'profile', coachFilter = '';   // coachFilter: '' = all months
+const keyOf = n => (n||'').trim().toLowerCase();
+const isHuddle = t => t.type==='Huddle' || !keyOf(t.employee);
+
+// Focus picker (agent logs): choose from the strengths, weaknesses, goals and agenda of the session's month
+let newFocus = null;   // pick made in the blank row: {type,id,text}
+const FOCUS_GROUPS = [['Strength','strengths','date','text','Strengths'], ['Weakness','weaknesses','date','text','Weaknesses'],
+                      ['Goal','goals','month','goal','Goals'], ['Agenda','agenda','month','text','Agenda']];
+const monthLabel = m => new Date(m+'-01T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+const defDate = mon => (mon && mon!==todayISO().slice(0,7)) ? mon+'-01' : todayISO();
+function focusItems(p, month){
+  return FOCUS_GROUPS.map(([type,key,dk,tk,label])=>({type, label,
+    items:p[key].filter(x=>(x[dk]||'').slice(0,7)===month).map(x=>({id:x.id, text:x[tk]}))}));
+}
+function focusCellHtml(ctx, cur, month, isNew){
+  const groups = focusItems(ctx.p, month);
+  const text = cur ? (cur.text||'') : '';
+  const matched = !!(cur && cur.id && groups.some(g=>g.items.some(i=>i.id===cur.id)));
+  const any = groups.some(g=>g.items.length);
+  const opts = (text && !matched ? `<option value="__cur" selected>${esc(text)}</option>` : '')
+    + (!text ? '<option value="" selected>Choose focus…</option>' : '')
+    + groups.filter(g=>g.items.length).map(g=>`<optgroup label="${g.label}">${g.items.map(i=>`<option value="${g.type}|${i.id}"${cur&&cur.id===i.id?' selected':''}>${esc(i.text)}</option>`).join('')}</optgroup>`).join('')
+    + (any ? '' : `<option value="" disabled>Nothing under strengths, weaknesses, goals or agenda for ${monthLabel(month||todayISO().slice(0,7))}</option>`)
+    + '<option value="__other">✎ Other (type it)…</option>';
+  const tag = cur && cur.type ? `<span class="ftag ft-${cur.type}">${cur.type}</span>` : '';
+  return `<div class="fcell"><div class="fview">${tag}<span class="ftxt${text?'':' ph'}">${text?esc(text):'Choose focus…'}</span><span class="caret">▾</span></div>`
+    + `<select class="fsel" ${isNew?'id="n-focus"':'data-focus'} title="Pick from this month's strengths, weaknesses, goals and agenda">${opts}</select></div>`;
+}
+function wireFocus(td, ctx, month, onPick, onOther){
+  const sel = td.querySelector('select.fsel'); if(!sel) return;
+  sel.onchange = ()=>{
+    const v = sel.value;
+    if(v==='__other'){ onOther(); return; }
+    if(!v || v==='__cur') return;
+    const [type, id] = v.split('|');
+    const g = focusItems(ctx.p, month).find(x=>x.type===type);
+    const it = g && g.items.find(i=>i.id===id);
+    if(it) onPick({type, id, text:it.text});
+  };
+}
+
+// `ctx` ({p}) turns the first column into the focus picker; without it (Team Huddle) it is free text
+function coachTableHtml(rows, labels, defStatus, ctx){
+  const list = rows.slice().reverse();   // rows come oldest-first; show newest first
+  const opts = sel => (COACH_STATUSES.includes(sel)?COACH_STATUSES:COACH_STATUSES.concat(sel)).map(s=>`<option ${s===sel?'selected':''}>${esc(s)}</option>`).join('');
+  const rowFocus = t => ctx
+    ? `<td class="ftd">${focusCellHtml(ctx, t.task ? {type:t.focusType||'', id:t.focusId||'', text:t.task} : null, (t.date||'').slice(0,7), false)}</td>`
+    : `<td><textarea rows="1" data-f="task">${esc(t.task||'')}</textarea></td>`;
+  const newFocusTd = ctx ? '<td class="ftd"></td>'
+    : `<td><textarea rows="1" id="n-task" placeholder="${labels[0]}. Enter to add, Shift+Enter for a new line"></textarea></td>`;
+  return `<table><thead><tr><th class="col-no">#</th><th class="col-date">Date</th><th>${labels[0]}</th><th>${labels[1]}</th><th class="col-img">Resources</th><th class="col-st">Status</th><th class="col-x"></th></tr></thead><tbody>
+    <tr class="new"><td class="no"></td>
+      <td><input type="date" id="n-date" value="${defDate(coachFilter)}"></td>
+      ${newFocusTd}
+      <td><textarea rows="1" id="n-notes" placeholder="${labels[1]}"></textarea></td>
+      <td class="imgs" tabindex="0"></td>
+      <td><select id="n-status">${opts(defStatus)}</select></td><td></td></tr>
+    ${list.map((t,i)=>`<tr data-id="${t.id}"><td class="no">${list.length-i}</td>
+      <td><input type="date" data-f="date" value="${t.date}"></td>
+      ${rowFocus(t)}
+      <td><textarea rows="1" data-f="notes">${esc(t.notes||'')}</textarea></td>
+      <td class="imgs" tabindex="0"></td>
+      <td><select data-f="status" class="${stc(t.status)}">${opts(t.status)}</select></td>
+      <td><button class="x" data-del title="Delete">×</button></td></tr>`).join('')}
+  </tbody></table>`;
+}
+// `mk()` supplies the fixed fields for new rows (type, employee)
+function bindCoachTable(root, mk, ctx){
+  root.querySelectorAll('textarea').forEach(ta=>{ autosize(ta); ta.addEventListener('input', ()=>autosize(ta)); });
+  root.querySelectorAll('tbody tr[data-id]').forEach(tr=>{
+    const t = tasks.find(x=>x.id===tr.dataset.id);
+    tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange = async ()=>{
+      t[inp.dataset.f] = inp.value;
+      if(inp.dataset.f==='task'){ t.focusType = ''; t.focusId = ''; }
+      if(inp.dataset.f==='status') inp.className = stc(inp.value);
+      await saveTasks();
+      if(inp.dataset.f==='date') render();
+    });
+    tr.querySelector('[data-del]').onclick = async ()=>{ tasks = tasks.filter(x=>x.id!==t.id); await saveTasks(); render(); };
+    refreshRowCell(tr.querySelector('td.imgs'), t);
+    const ftd = tr.querySelector('.ftd');
+    if(ctx && ftd){
+      wireFocus(ftd, ctx, (t.date||'').slice(0,7),
+        async r=>{ t.task = r.text; t.focusType = r.type; t.focusId = r.id; await saveTasks(); render(); },
+        ()=>{
+          ftd.innerHTML = '<textarea rows="1" placeholder="Type the focus…"></textarea>';
+          const ta = ftd.firstChild; ta.value = t.task||''; autosize(ta); ta.focus();
+          ta.addEventListener('input', ()=>autosize(ta));
+          ta.onchange = async ()=>{ t.task = ta.value.trim(); t.focusType = ''; t.focusId = ''; await saveTasks(); };
+          ta.onblur = ()=>render();
+        });
+    }
+  });
+  refreshNewCell(root.querySelector('tr.new td.imgs'));
+
+  const nTd = root.querySelector('tr.new .ftd');
+  if(ctx && nTd){
+    const nDate = root.querySelector('#n-date');
+    const paint = ()=>{
+      const month = nDate.value.slice(0,7);
+      nTd.innerHTML = focusCellHtml(ctx, newFocus, month, true);
+      wireFocus(nTd, ctx, month, r=>{ newFocus = r; paint(); }, ()=>{
+        newFocus = null;
+        nTd.innerHTML = '<textarea rows="1" id="n-task" placeholder="Type the focus…"></textarea>';
+        const ta = nTd.firstChild; ta.addEventListener('input', ()=>autosize(ta)); ta.focus();
+      });
+    };
+    nDate.onchange = ()=>{ newFocus = null; paint(); };
+    paint();
+  }
+
+  const add = async ()=>{
+    const ta = root.querySelector('#n-task');
+    let task = '', fx = {};
+    if(ta) task = ta.value.trim();
+    else if(newFocus){ task = newFocus.text; fx = {focusType:newFocus.type, focusId:newFocus.id}; }
+    if(!task){ (ta || root.querySelector('#n-focus')).focus(); return; }
+    const entry = {...mk(), ...fx, id:uid(), category:COACH_CAT, task,
+      date: root.querySelector('#n-date').value || todayISO(),
+      notes: root.querySelector('#n-notes').value.trim(),
+      status: root.querySelector('#n-status').value};
+    if(newRes.length){ entry.res = newRes; newRes = []; }
+    newFocus = null;
+    tasks.push(entry);
+    await saveTasks(); render();
+    const nt = document.getElementById('n-task') || document.getElementById('n-focus');
+    if(nt) nt.focus();
+  };
+  root.querySelector('tr.new').addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); add(); }
+  });
+}
+function coachAgents(){
+  const map = new Map();
+  agentList().forEach(a=>map.set(a.key, {key:a.key, name:a.name}));
+  Object.entries(meta.profiles||{}).forEach(([k,p])=>{ if(!map.has(k)) map.set(k, {key:k, name:p.name}); });
+  return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+const coachRows = pred => tasks.filter(t=>t.category===COACH_CAT && pred(t)).sort((a,b)=>a.date.localeCompare(b.date));
+
+function renderCoaching(sheet){
+  const bar = `<div class="subtabs"><span class="sub ${coachSub==='huddle'?'active':''}" data-s="huddle">Team Huddle</span><span class="sub ${coachSub==='agent'?'active':''}" data-s="agent">Per Agent</span><span class="sub ${coachSub==='month'?'active':''}" data-s="month">Monthly Overview</span></div>`;
+  sheet.innerHTML = bar + '<div id="coachBody"></div>';
+  sheet.querySelectorAll('.sub').forEach(el=>el.onclick = ()=>{ coachSub = el.dataset.s; newRes = []; newFocus = null; render(); });
+  const body = document.getElementById('coachBody');
+
+  if(coachSub==='huddle'){
+    body.innerHTML = coachTableHtml(coachRows(isHuddle), ['Topic','Talking points / notes'], 'Scheduled');
+    bindCoachTable(body, ()=>({type:'Huddle', employee:''}));
+    return;
+  }
+  if(coachSub==='month'){ renderMonthly(body); return; }
+
+  // Per Agent
+  const agents = coachAgents();
+  const countOf = k => coachRows(t=>!isHuddle(t) && keyOf(t.employee)===k).length;
+  if(!agents.some(a=>a.key===coachAgent)) coachAgent = agents.length ? agents[0].key : null;
+  const a = agents.find(x=>x.key===coachAgent);
+  const side = `<div class="side"><input class="addag" id="newAgent" placeholder="+ Add agent, Enter">
+    ${agents.map(g=>`<div class="ag ${g.key===coachAgent?'active':''}" data-k="${esc(g.key)}"><span class="agn"><span class="avatar">${initials(g.name)}</span>${esc(g.name)}</span><span class="n">${countOf(g.key)||''}</span></div>`).join('')}</div>`;
+  let main = '<div class="main"><div class="empty">Add an agent on the left to start their profile.</div></div>';
+  let p = null, rows = [];
+  const mon = coachFilter;   // '' = all months
+  if(a){
+    p = profOf(a);
+    rows = coachRows(t=>!isHuddle(t) && keyOf(t.employee)===a.key);
+    const shown = rows.filter(t=>!mon || (t.date||'').slice(0,7)===mon);
+    const last = rows.length ? fmtLong(rows[rows.length-1].date) : '–';
+    const gmMonth = mon || todayISO().slice(0,7);
+    const gm = p.goals.filter(g=>g.month===gmMonth);
+    const gmShort = new Date(gmMonth+'-01T00:00:00').toLocaleDateString('en-US',{month:'short'});
+    const followups = rows.filter(t=>t.status==='Follow-up needed').length;
+    const cnt = (k, dk)=>{ const f = p[k].filter(x=>!mon || (x[dk]||'').slice(0,7)===mon).length; return mon ? `${f} of ${p[k].length}` : (f || ''); };
+    const detailsCard = `<div class="card dcard"><div class="card-h">Details</div>
+        <div class="pfields">
+          <div><label>Attitude</label><textarea id="p-attitude" placeholder="How they carry themselves, work style, reaction to feedback...">${esc(p.attitude||'')}</textarea></div>
+          <div><label>Other details</label><textarea id="p-details" placeholder="Anything else worth remembering about them">${esc(p.details||'')}</textarea></div>
+        </div></div>`;
+    const profileView = `<div class="pbody">
+        <div class="card good"><div class="card-h">Strengths<span class="cnt">${cnt('strengths','date')}</span></div><div class="mini" id="mini-strengths"></div></div>
+        <div class="card bad"><div class="card-h">Weaknesses<span class="cnt">${cnt('weaknesses','date')}</span></div><div class="mini" id="mini-weaknesses"></div></div>
+        <div class="card goal"><div class="card-h">Goals<span class="cnt">${cnt('goals','month')}</span></div><div class="mini" id="mini-goals"></div></div>
+        <div class="card agenda"><div class="card-h">Agenda<span class="cnt">${cnt('agenda','month')}</span></div><div class="mini" id="mini-agenda"></div></div>
+      </div>`;
+    const logsView = `<div class="card logcard"><div class="card-h">Coaching log<span class="cnt">${mon ? shown.length+' of '+rows.length : (rows.length||'')}</span></div><div id="agentLog">${coachTableHtml(shown, ['Focus / topic','Notes'], 'Done', {p})}</div></div>`;
+    const scoreView = `<div class="card logcard"><div class="card-h">Monthly scorecard<span class="scact"><span class="hint" id="scAt"></span><button class="rmini" id="scRef">Refresh</button><a class="rmini" id="scOpen" target="_blank" rel="noopener">Open sheet ↗</a></span></div><div class="scbody" id="scBody"></div></div>`;
+    main = `<div class="main cmain">
+      <div class="top2"><div class="topl">
+        <div class="phead"><div class="avatar big">${initials(a.name)}</div>
+          <div><h2>${esc(a.name)}</h2>
+            <div class="tiles">
+              <div class="tile"><b>${rows.length}</b><span>Coachings</span></div>
+              <div class="tile"><b>${last}</b><span>Last coached</span></div>
+              <div class="tile"><b>${gm.filter(g=>g.status==='Met').length}/${gm.length}</b><span>Goals met (${gmShort})</span></div>
+              <div class="tile ${followups?'warn':''}"><b>${followups}</b><span>Follow-ups needed</span></div>
+            </div></div></div>
+        <div class="ptabs"><span class="ptab ${coachAgentTab==='profile'?'active':''}" data-pt="profile">Profile</span><span class="ptab ${coachAgentTab==='logs'?'active':''}" data-pt="logs">Logs<span class="n">${rows.length||''}</span></span><span class="ptab ${coachAgentTab==='score'?'active':''}" data-pt="score">Scorecard</span>
+          <span class="grow"></span>
+          <span class="mf"><span class="mfl">${mon ? '' : 'All months'}</span><input type="month" id="mFilter" value="${mon}"><button class="rmini" id="mAll" ${mon?'':'disabled'}>All</button></span></div>
+      </div>${coachAgentTab==='profile' ? detailsCard : ''}</div>
+      ${coachAgentTab==='profile' ? profileView : coachAgentTab==='score' ? scoreView : logsView}</div>`;
+  }
+  body.innerHTML = `<div class="split">${side}${main}</div>`;
+
+  body.querySelectorAll('.ag').forEach(el=>el.onclick = ()=>{ coachAgent = el.dataset.k; newRes = []; newFocus = null; render(); });
+  document.getElementById('newAgent').onkeydown = async e=>{
+    if(e.key!=='Enter') return;
+    const name = e.target.value.trim(); if(!name) return;
+    const k = keyOf(name);
+    if(!meta.profiles[k]) meta.profiles[k] = {name};
+    coachAgent = k; await save('qc-meta', meta); render();
+  };
+  body.querySelectorAll('.ptab').forEach(el=>el.onclick = ()=>{ coachAgentTab = el.dataset.pt; newRes = []; newFocus = null; render(); });
+  const mf = document.getElementById('mFilter');
+  if(mf){
+    mf.onchange = e=>{ coachFilter = e.target.value; newRes = []; newFocus = null; render(); };
+    document.getElementById('mAll').onclick = ()=>{ coachFilter = ''; render(); };
+  }
+  if(a && coachAgentTab==='profile'){
+    [['p-attitude','attitude'],['p-details','details']].forEach(([id,f])=>{
+      const ta = document.getElementById(id);
+      ta.onchange = async ()=>{ p[f] = ta.value; await save('qc-meta', meta); };
+    });
+    Object.keys(MINI).forEach(key=>{
+      const box = document.getElementById('mini-'+key);
+      box.innerHTML = miniHtml(key, p[key], mon); bindMini(box, key, p);
+    });
+  }
+  if(a && coachAgentTab==='score') initScore(a, p);
+  if(a && coachAgentTab==='logs'){
+    bindCoachTable(document.getElementById('agentLog'), ()=>({type:'Coaching', employee:a.name}), {p});
+  }
+}
+
+function initials(name){
+  const w = (name||'').trim().split(/\s+/).filter(Boolean);
+  return ((w[0]||'?')[0] + (w.length>1 ? w[w.length-1][0] : '')).toUpperCase();
+}
+
+// Monthly Overview: pick a month, see each agent's activity and write a summary of it
+let coachMonth = new Date().toISOString().slice(0,7);
+function shiftMonth(m, d){
+  const [y, mo] = m.split('-').map(Number);
+  const dt = new Date(y, mo-1+d, 1);
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+}
+function renderMonthly(body){
+  const m = coachMonth;
+  const label = new Date(m+'-01T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const inMonth = t => (t.date||'').slice(0,7)===m;
+  const huddles = coachRows(t=>isHuddle(t) && inMonth(t));
+  meta.monthSummaries = meta.monthSummaries || {};
+  const lines = arr => arr.map(x=>`<div class="mline">${x}</div>`).join('') || '<div class="mline">–</div>';
+  const agentRows = coachAgents().map(ag=>{
+    const pr = profOf(ag);
+    const sess = coachRows(t=>!isHuddle(t) && keyOf(t.employee)===ag.key && inMonth(t));
+    const goals = pr.goals.filter(g=>g.month===m);
+    const met = goals.filter(g=>g.status==='Met').length;
+    const agenda = pr.agenda.filter(x=>x.month===m);
+    return `<tr data-k="${esc(ag.key)}">
+      <td><a class="aglink" data-open="${esc(ag.key)}"><span class="avatar">${initials(ag.name)}</span>${esc(ag.name)}</a></td>
+      <td><b>${sess.length}</b>${lines(sess.map(t=>esc((t.task||'').slice(0,70))))}</td>
+      <td><b>${goals.length ? met+'/'+goals.length+' met' : '–'}</b>${lines(goals.map(g=>esc(g.goal)+' <i>('+esc(g.status||'Not started')+')</i>'))}</td>
+      <td><b>${agenda.length || '–'}</b>${lines(agenda.map(x=>esc(x.text)+' <i>('+esc(x.status||'Pending')+')</i>'))}</td>
+      <td><textarea rows="2" data-sum placeholder="Summary of ${esc(ag.name)}'s month...">${esc((pr.summaries||{})[m]||'')}</textarea></td></tr>`;
+  }).join('');
+  body.innerHTML = `<div class="monthbar"><button class="btn" id="mPrev">‹</button>
+      <input type="month" id="mPick" value="${m}"><button class="btn" id="mNext">›</button>
+      <span class="mlabel">${label}</span></div>
+    <div class="cmain">
+      <div class="card"><div class="card-h">Team overview<span class="cnt">${huddles.length} huddle${huddles.length===1?'':'s'}</span></div>
+        <div class="pfields one"><div>${lines(huddles.map(t=>esc((t.task||'').slice(0,90))))}</div>
+          <div><label>Team summary</label><textarea id="teamSum" placeholder="Summary of the team's month...">${esc(meta.monthSummaries[m]||'')}</textarea></div></div></div>
+      <div class="card"><div class="card-h">Agents</div>
+        ${agentRows ? `<table class="mtable"><thead><tr><th>Agent</th><th class="col-m">Coachings</th><th class="col-m">Goals</th><th class="col-m">Agenda</th><th>Summary</th></tr></thead><tbody>${agentRows}</tbody></table>`
+          : '<div class="empty">No agents yet. Add one in Per Agent.</div>'}</div>
+    </div>`;
+  const go = d=>{ coachMonth = d; render(); };
+  document.getElementById('mPrev').onclick = ()=>go(shiftMonth(m,-1));
+  document.getElementById('mNext').onclick = ()=>go(shiftMonth(m,1));
+  document.getElementById('mPick').onchange = e=>{ if(e.target.value) go(e.target.value); };
+  body.querySelectorAll('textarea').forEach(ta=>{ autosize(ta); ta.addEventListener('input', ()=>autosize(ta)); });
+  document.getElementById('teamSum').onchange = async e=>{ meta.monthSummaries[m] = e.target.value; await save('qc-meta', meta); };
+  body.querySelectorAll('tr[data-k]').forEach(tr=>{
+    const ag = coachAgents().find(x=>x.key===tr.dataset.k);
+    tr.querySelector('[data-sum]').onchange = async e=>{
+      const pr = profOf(ag); pr.summaries = pr.summaries || {}; pr.summaries[m] = e.target.value;
+      await save('qc-meta', meta);
+    };
+    tr.querySelector('[data-open]').onclick = ()=>{ coachAgent = ag.key; coachSub = 'agent'; render(); };
+  });
+}
+
+// Agent profile trackers: strengths / weaknesses (with where it was seen), monthly goals and agenda
+const GOAL_STATUSES = ['Not started','In progress','Met','Missed'];
+const AGENDA_STATUSES = ['Pending','Discussed','Carried over'];
+const SEL_OPTS = {goals:GOAL_STATUSES, agenda:AGENDA_STATUSES};
+const MINI = {
+  strengths:  [['date','Date','date'], ['text','Strength','area'], ['where','Where observed','area']],
+  weaknesses: [['date','Date','date'], ['text','Weakness / area to improve','area'], ['where','Where observed','area']],
+  goals:      [['month','Month','month'], ['goal','Goal','area'], ['notes','Progress / notes','area'], ['status','Status','sel']],
+  agenda:     [['month','Month','month'], ['text','Agenda item','area'], ['status','Status','sel']]
+};
+const MINI_REQ = {strengths:'text', weaknesses:'text', goals:'goal', agenda:'text'};
+const MINI_NOUN = {strengths:'strengths', weaknesses:'weaknesses', goals:'goals', agenda:'agenda items'};
+const MINI_PH = {text:'Type here, Enter to add', where:'e.g. call, ticket, huddle', goal:'Goal for the month', notes:'Progress / notes'};
+const MINI_PH_KEY = {agenda:{text:'What to discuss or coach on'}};
+
+function profOf(a){
+  const p = meta.profiles[a.key] = meta.profiles[a.key] || {name:a.name};
+  p.name = p.name || a.name;
+  // older profiles kept strengths as one text box and a single focus box
+  if(typeof p.strengths==='string'){ p.strengths = p.strengths.trim() ? [{id:uid(), text:p.strengths, where:'', date:''}] : []; }
+  if(p.focus){ (p.goals = p.goals||[]).push({id:uid(), month:todayISO().slice(0,7), goal:p.focus, notes:'', status:'In progress'}); delete p.focus; }
+  Object.keys(MINI).forEach(k=>{ if(!Array.isArray(p[k])) p[k] = []; });
+  return p;
+}
+function miniCell(type, f, val, isNew, key){
+  const at = isNew ? `id="n-${key}-${f}"` : `data-f="${f}"`;
+  const ph = (MINI_PH_KEY[key]||{})[f] || MINI_PH[f] || '';
+  if(type==='area') return `<textarea rows="1" ${at}${isNew?` placeholder="${ph}"`:''}>${esc(val||'')}</textarea>`;
+  if(type==='sel'){
+    const o = SEL_OPTS[key], cur = val || o[0];
+    return `<select ${at} class="${stc(cur)}">${o.map(s=>`<option ${s===cur?'selected':''}>${s}</option>`).join('')}</select>`;
+  }
+  return `<input type="${type}" ${at} value="${esc(val||'')}">`;
+}
+function miniHtml(key, list, mon){
+  const cols = MINI[key];
+  const sk = (key==='goals' || key==='agenda') ? 'month' : 'date';   // newest first; ties: last added first
+  const rows = list.map((x,i)=>[x,i]).filter(([x])=>!mon || (x[sk]||'').slice(0,7)===mon)
+    .sort((x,y)=>(y[0][sk]||'').localeCompare(x[0][sk]||'') || y[1]-x[1]).map(x=>x[0]);
+  const fresh = c => c[2]==='date' ? defDate(mon) : c[2]==='month' ? (mon || todayISO().slice(0,7)) : '';
+  return `<table><thead><tr>${cols.map(c=>`<th${c[2]==='area'?'':` style="width:${c[2]==='month'?172:140}px"`}>${c[1]}</th>`).join('')}<th class="col-x"></th></tr></thead><tbody>
+    <tr class="new">${cols.map(c=>`<td>${miniCell(c[2], c[0], fresh(c), true, key)}</td>`).join('')}<td></td></tr>
+    ${rows.map(it=>`<tr data-rid="${it.id}">${cols.map(c=>`<td>${miniCell(c[2], c[0], it[c[0]], false, key)}</td>`).join('')}<td><button class="x" data-del title="Delete">×</button></td></tr>`).join('')}
+  </tbody></table>`
+  + (rows.length ? '' : `<div class="mini-empty">${mon ? 'Nothing for '+monthLabel(mon)+'.' : 'No '+MINI_NOUN[key]+' yet. Type in the top row and press Enter.'}</div>`);
+}
+function bindMini(root, key, p){
+  root.querySelectorAll('textarea').forEach(ta=>{ autosize(ta); ta.addEventListener('input', ()=>autosize(ta)); });
+  root.querySelectorAll('tbody tr[data-rid]').forEach(tr=>{
+    const it = p[key].find(x=>x.id===tr.dataset.rid);
+    tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange = async ()=>{
+      it[inp.dataset.f] = inp.value; await save('qc-meta', meta);
+      if(inp.dataset.f==='status') inp.className = stc(inp.value);
+      if(inp.dataset.f==='month' || inp.dataset.f==='date') render();   // re-sort / re-filter
+    });
+    tr.querySelector('[data-del]').onclick = async ()=>{ p[key] = p[key].filter(x=>x.id!==it.id); await save('qc-meta', meta); render(); };
+  });
+  const req = MINI_REQ[key];
+  root.querySelector('tr.new').addEventListener('keydown', async e=>{
+    if(e.key!=='Enter' || e.shiftKey) return;
+    e.preventDefault();
+    const item = {id:uid()};
+    MINI[key].forEach(c=>{ item[c[0]] = root.querySelector('#n-'+key+'-'+c[0]).value.trim(); });
+    if(!item[req]){ root.querySelector('#n-'+key+'-'+req).focus(); return; }
+    p[key].push(item); await save('qc-meta', meta); render();
+    document.getElementById('n-'+key+'-'+req).focus();
+  });
+}
+
+// Agents: grouped from the Employee field (case-insensitive), live + archived entries
+let selectedAgent = null;
+function agentList(){
+  const map = new Map();
+  tasks.concat(archive).forEach(t=>{
+    const name = (t.employee||'').trim(); if(!name) return;
+    const k = name.toLowerCase();
+    if(!map.has(k)) map.set(k, {key:k, name, items:[]});
+    map.get(k).items.push(t);
+  });
+  return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+function catLabel(cat){ const t = TABS.find(x=>x.cat===cat); return t ? t.label : (cat||''); }
+
+function renderAgents(sheet){
+  const agents = agentList();
+  if(!agents.length){
+    sheet.innerHTML = '<div class="empty">No agents yet. Type an agent\'s name in the Employee column on any tab and their profile shows up here.</div>';
+    return;
+  }
+  if(!agents.some(a=>a.key===selectedAgent)) selectedAgent = agents[0].key;
+  const a = agents.find(x=>x.key===selectedAgent);
+  const live = new Set(tasks);
+  const items = a.items.slice().sort((x,y)=>(y.date||'').localeCompare(x.date||''));
+  const openCount = a.items.filter(t=>live.has(t) && !DONE.includes(t.status)).length;
+  const chips = TABS.map(t=>[t.label, a.items.filter(i=>i.category===t.cat).length]).filter(c=>c[1])
+    .map(([l,n])=>`<span class="chip">${l} <b>${n}</b></span>`).join('');
+
+  sheet.innerHTML = `<div class="split">
+    <div class="side">${agents.map(g=>`<div class="ag ${g.key===selectedAgent?'active':''}" data-k="${esc(g.key)}">
+      <span>${esc(g.name)}</span><span class="n">${g.items.length}</span></div>`).join('')}</div>
+    <div class="main">
+      <div class="prof"><h2>${esc(a.name)}</h2>
+        <div class="chips"><span class="chip">${openCount} open</span>${chips}</div></div>
+      <table><thead><tr>
+        <th class="col-date">Date</th><th class="col-emp">Type</th><th>Task / topic</th>
+        <th class="col-st">Status</th><th class="col-notes">Notes</th>
+      </tr></thead><tbody>${items.map(t=>`<tr>
+        <td style="padding-left:18px">${t.date||''}</td><td>${catLabel(t.category)}</td>
+        <td>${esc(t.task||t.type||'')}</td>
+        <td class="${stc(t.status)}">${t.status||''}${live.has(t)?'':' <span class="arch">archived</span>'}</td>
+        <td>${esc(t.notes||'')}</td></tr>`).join('')}</tbody></table>
+    </div></div>`;
+  sheet.querySelectorAll('.ag').forEach(el=>el.onclick=()=>{ selectedAgent = el.dataset.k; render(); });
+}
+
+function renderArchive(sheet){
+  sheet.innerHTML = `<input type="search" id="q" placeholder="Search archive...">
+    <table><thead><tr>
+      <th class="col-date">Date</th><th>Task / topic</th><th class="col-emp">Employee</th>
+      <th class="col-st">Status</th><th class="col-notes">Category / notes</th>
+    </tr></thead><tbody id="arcBody"></tbody></table>`;
+  const draw = ()=>{
+    const q = document.getElementById('q').value.trim().toLowerCase();
+    const list = archive.filter(a=>!q || JSON.stringify(a).toLowerCase().includes(q))
+                        .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    document.getElementById('arcBody').innerHTML = list.length ? list.map(t=>`<tr>
+      <td style="padding-left:18px">${t.date||''}</td><td>${esc(t.task||t.type||'')}</td>
+      <td>${esc(t.employee||'')}</td><td class="${stc(t.status)}">${t.status||''}</td>
+      <td>${esc(t.category||'')}${t.notes?' · '+esc(t.notes):''}</td></tr>`).join('')
+      : '<tr><td colspan="5" class="empty">Nothing archived yet. Completed and Closed rows move here.</td></tr>';
+  };
+  document.getElementById('q').oninput = draw;
+  draw();
+}
+
+// ---------- Dashboard: Eisenhower matrix + ideas + log. Drag the grip (⋮⋮) to move items between boxes ----------
+const QUADS = [
+  {q:'q1', title:'Do first',          sub:'Urgent · Important'},
+  {q:'q2', title:'Schedule',          sub:'Important · Not urgent'},
+  {q:'q3', title:'Delegate / quick',  sub:'Urgent · Not important'},
+  {q:'q4', title:'Eliminate / later', sub:'Not urgent · Not important'}
+];
+const SIDE_CARDS = [
+  {key:'ideas', title:'Ideas & eureka', cls:'idea', ph:'Eureka! Type the idea, Enter to save', date:false, check:true},
+  {key:'logs',  title:'Log',            cls:'log',  ph:'Quick note for today, Enter to add',   date:true,  check:false}
+];
+function dashOf(){
+  const d = meta.dash = meta.dash || {};
+  if(!Array.isArray(d.matrix)){   // first run of the matrix: bring over the old Dues / To check lists
+    d.matrix = [];
+    (d.dues||[]).forEach(x=>d.matrix.push({...x, q:'q1'}));
+    (d.checks||[]).forEach(x=>d.matrix.push({...x, q:'q2'}));
+    delete d.dues; delete d.checks;
+  }
+  ['ideas','logs'].forEach(k=>{ if(!Array.isArray(d[k])) d[k] = []; });
+  d.autoQ = d.autoQ || {};
+  return d;
+}
+const dshort = iso => iso ? new Date(iso+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+function renderDashboard(sheet){
+  const d = dashOf(), today = todayISO();
+  const in7 = new Date(Date.now()+7*864e5).toISOString().slice(0,10);
+  const live = tasks.filter(t=>!DONE.includes(t.status));
+  const overdue = live.filter(t=>t.date<today).length;
+  const openCl = tasks.filter(t=>t.category==='🚨 ES Tracker' && t.status==='Open').length;
+  const ideasLeft = d.ideas.filter(x=>!x.done).length;
+  const doFirst = d.matrix.filter(x=>x.q==='q1' && !x.done).length;
+  const longDate = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  // tasks from the other tabs that are overdue or due within a week show up too; overdue starts in Do first, the rest in Schedule
+  const autoItems = live.filter(t=>t.date<=in7).map(t=>({auto:true, id:t.id, text:t.task||t.type||'(no title)', date:t.date, cat:catLabel(t.category),
+    q: d.autoQ[t.id] || (t.date<today ? 'q1' : 'q2'), i:-1}));
+  const itemsOf = q => d.matrix.map((x,i)=>({...x, i})).filter(x=>x.q===q).concat(autoItems.filter(x=>x.q===q))
+    .sort((x,y)=> (!!x.done!==!!y.done ? (x.done?1:-1) : 0) || (x.date||'9999').localeCompare(y.date||'9999') || y.i-x.i);
+
+  const grip = (src, id) => `<span class="dgrip" draggable="true" data-src="${src}" data-id="${id}" title="Drag to another box">⋮⋮</span>`;
+  const matRow = it => it.auto
+    ? `<div class="drow auto" data-go="${esc(it.cat)}" title="Open ${esc(it.cat)}">${grip('auto', it.id)}<span class="dchk"></span><div class="dtxt">${esc(it.text)}<span class="ftag dtag">${esc(it.cat)}</span></div><span class="ddate ${it.date<today?'over':''}">${dshort(it.date)}${it.date<today?' · overdue':''}</span><span class="dx"></span></div>`
+    : `<div class="drow ${it.done?'done':''}" data-id="${it.id}">${grip('matrix', it.id)}<input type="checkbox" class="dchk" ${it.done?'checked':''}><textarea rows="1" data-f="text">${esc(it.text||'')}</textarea><input type="date" class="ddate ${!it.done && it.date && it.date<today?'over':''}" data-f="date" value="${it.date||''}"><button class="x dx" data-del title="Delete">×</button></div>`;
+  const sideRow = (c, it) => `<div class="drow ${it.done?'done':''}" data-id="${it.id}">${c.key==='ideas' ? grip('ideas', it.id) : '<span class="dgrip"></span>'}${c.check ? `<input type="checkbox" class="dchk" ${it.done?'checked':''}>` : '<span class="dchk"></span>'}<textarea rows="1" data-f="text">${esc(it.text||'')}</textarea>${c.date ? `<input type="date" class="ddate" data-f="date" value="${it.date||''}">` : ''}<button class="x dx" data-del title="Delete">×</button></div>`;
+  const sideItems = c => d[c.key].map((x,i)=>({...x, i})).sort((x,y)=>{
+    if(c.check && !!x.done!==!!y.done) return x.done ? 1 : -1;
+    if(c.key==='logs') return (y.date||'').localeCompare(x.date||'') || y.i-x.i;
+    return y.i-x.i;
+  });
+  const addBar = (id, ph, date, val) => `<div class="dadd"><textarea rows="1" id="da-${id}" placeholder="${ph}"></textarea>${date ? `<input type="date" id="dd-${id}" value="${val||''}" title="Due date (optional)">` : ''}<button class="btn" id="db-${id}">Add</button></div>`;
+
+  sheet.innerHTML = `<div class="dash">
+    <div class="dhead"><h2>Dashboard</h2><span class="dsub">${longDate}</span>
+      <div class="dtiles">
+        <div class="tile ${overdue?'warn':''}"><b>${overdue}</b><span>Overdue tasks</span></div>
+        <div class="tile"><b>${live.length}</b><span>Open tasks</span></div>
+        <div class="tile"><b>${openCl}</b><span>Open clarifications</span></div>
+        <div class="tile ${doFirst?'warn':''}"><b>${doFirst}</b><span>Do first</span></div>
+        <div class="tile"><b>${ideasLeft}</b><span>Ideas to try</span></div>
+      </div></div>
+    <div class="dwrap">
+      <div class="dmat"><div class="yax"><span>Important</span><span>Not important</span></div>
+        <div class="mcol"><div class="xax"><span>Urgent</span><span>Not urgent</span></div>
+          <div class="dgrid">${['q1','q2','q3','q4'].map(q=>{
+            const Q = QUADS.find(x=>x.q===q), items = itemsOf(q);
+            return `<div class="card ${q}" data-q="${q}"><div class="card-h"><span class="l">${Q.title}<span class="qsub">${Q.sub}</span></span><span class="cnt">${items.length||''}</span></div>
+              ${addBar(q, 'Add to '+Q.title+'. Enter to save', true, '')}
+              <div class="dlist">${items.map(matRow).join('') || '<div class="mini-empty">Drag items here</div>'}</div></div>`;
+          }).join('')}</div></div></div>
+      <div class="dside">${SIDE_CARDS.map(c=>{
+        const items = sideItems(c);
+        return `<div class="card ${c.cls}" data-k="${c.key}"><div class="card-h">${c.title}<span class="cnt">${items.length||''}</span></div>
+          ${addBar(c.key, c.ph, c.date, c.key==='logs'?today:'')}
+          <div class="dlist">${items.map(it=>sideRow(c, it)).join('') || '<div class="mini-empty">Nothing here yet</div>'}</div></div>`;
+      }).join('')}</div>
+    </div></div>`;
+
+  const persist = async ()=>{ await save('qc-meta', meta); render(); };
+  const wireAdd = (id, onAdd)=>{
+    const ta = sheet.querySelector('#da-'+id);
+    const add = async ()=>{
+      const text = ta.value.trim(); if(!text){ ta.focus(); return; }
+      const dd = sheet.querySelector('#dd-'+id);
+      onAdd(text, dd ? dd.value : '');
+      await save('qc-meta', meta); render();
+      document.getElementById('da-'+id).focus();
+    };
+    sheet.querySelector('#db-'+id).onclick = add;
+    ta.addEventListener('input', ()=>autosize(ta));
+    ta.onkeydown = e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); add(); } };
+  };
+  QUADS.forEach(Q=>wireAdd(Q.q, (text, dt)=>d.matrix.push({id:uid(), text, date:dt, done:false, q:Q.q})));
+  SIDE_CARDS.forEach(c=>wireAdd(c.key, (text, dt)=>d[c.key].push({id:uid(), text, date: c.date ? dt : today, done:false})));
+
+  // editing rows (matrix + ideas + log share the same row markup)
+  const wireRows = (card, list, setList)=>card.querySelectorAll('.drow[data-id]').forEach(row=>{
+    const it = list().find(x=>x.id===row.dataset.id); if(!it) return;
+    const t = row.querySelector('textarea'); autosize(t); t.addEventListener('input', ()=>autosize(t));
+    t.onchange = async ()=>{ it.text = t.value; await save('qc-meta', meta); };
+    const chk = row.querySelector('input[type=checkbox]');
+    if(chk) chk.onchange = async ()=>{ it.done = chk.checked; await persist(); };
+    const dt = row.querySelector('input[type=date]');
+    if(dt) dt.onchange = async ()=>{ it.date = dt.value; await persist(); };
+    row.querySelector('[data-del]').onclick = async ()=>{ setList(list().filter(x=>x!==it)); await persist(); };
+  });
+  sheet.querySelectorAll('.card[data-q]').forEach(card=>{
+    wireRows(card, ()=>d.matrix, v=>{ d.matrix = v; });
+    card.querySelectorAll('.drow.auto').forEach(row=>row.onclick = ()=>{ current = row.dataset.go; render(); });
+  });
+  sheet.querySelectorAll('.card[data-k]').forEach(card=>{ const k = card.dataset.k; wireRows(card, ()=>d[k], v=>{ d[k] = v; }); });
+
+  // drag and drop: grab the grip, drop on any of the four boxes
+  sheet.querySelectorAll('.dgrip[draggable]').forEach(g=>{
+    g.onclick = e=>e.stopPropagation();
+    g.ondragstart = e=>{
+      const row = g.closest('.drow');
+      e.dataTransfer.setData('text/plain', g.dataset.src+'|'+g.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+      try{ e.dataTransfer.setDragImage(row, 20, 14); }catch(_){}
+      setTimeout(()=>row.classList.add('dragging'), 0);
+    };
+    g.ondragend = ()=>sheet.querySelectorAll('.dragging,.over').forEach(x=>x.classList.remove('dragging','over'));
+  });
+  sheet.querySelectorAll('.card[data-q]').forEach(card=>{
+    card.ondragover = e=>{ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; card.classList.add('over'); };
+    card.ondragleave = e=>{ if(!card.contains(e.relatedTarget)) card.classList.remove('over'); };
+    card.ondrop = async e=>{
+      e.preventDefault(); card.classList.remove('over');
+      const [src, id] = (e.dataTransfer.getData('text/plain')||'').split('|'); const q = card.dataset.q;
+      if(src==='matrix'){ const it = d.matrix.find(x=>x.id===id); if(it) it.q = q; }
+      else if(src==='auto'){ d.autoQ[id] = q; }
+      else if(src==='ideas'){ const it = d.ideas.find(x=>x.id===id); if(it){ d.ideas = d.ideas.filter(x=>x!==it); d.matrix.push({id:it.id, text:it.text, date:'', done:!!it.done, q}); } }
+      else return;
+      await persist();
+    };
+  });
+}
+
+// ---------- Google Sheets scorecards (pulled by link) ----------
+function sheetParts(url){
+  const m = /\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/.exec(url||'');
+  if(!m) return null;
+  const g = /[#&?]gid=(\d+)/.exec(url);
+  return {id:m[1], gid:g ? g[1] : ''};
+}
+function parseCsv(txt){
+  const rows = []; let row = [], cur = '', q = false;
+  for(let i=0; i<txt.length; i++){
+    const ch = txt[i];
+    if(q){
+      if(ch==='"'){ if(txt[i+1]==='"'){ cur += '"'; i++; } else q = false; }
+      else cur += ch;
+    } else if(ch==='"') q = true;
+    else if(ch===','){ row.push(cur); cur = ''; }
+    else if(ch==='\n' || ch==='\r'){ if(ch==='\r' && txt[i+1]==='\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+    else cur += ch;
+  }
+  if(cur!=='' || row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+async function fetchSheet(sp){
+  const g = sp.gid ? '&gid='+sp.gid : '';
+  const urls = [`https://docs.google.com/spreadsheets/d/${sp.id}/gviz/tq?tqx=out:csv${g}`, `https://docs.google.com/spreadsheets/d/${sp.id}/export?format=csv${g}`];
+  let err;
+  for(const u of urls){
+    try{
+      const r = await fetch(u);
+      if(!r.ok) throw new Error('Google answered '+r.status);
+      const txt = await r.text();
+      if(/^\s*<(!doctype|html)/i.test(txt)) throw new Error('Sheet is private. Share it as "Anyone with the link can view"');
+      let rows = parseCsv(txt).filter(r=>r.some(c=>c.trim()!==''));
+      const w = Math.max(0, ...rows.map(r=>r.length));
+      rows = rows.map(r=>{ r = r.slice(); while(r.length<w) r.push(''); return r; });
+      const keep = []; for(let c=0;c<w;c++) if(rows.some(r=>r[c].trim()!=='')) keep.push(c);
+      return rows.map(r=>keep.map(c=>r[c])).slice(0, 300).map(r=>r.slice(0, 40));
+    }catch(e){ err = e; }
+  }
+  throw new Error(err && err.message && err.message!=='Failed to fetch' ? err.message : 'Could not reach the sheet. Check the link and that it is shared "Anyone with the link can view"');
+}
+
+// Per Agent > Scorecard
+function initScore(a, p){
+  const body = document.getElementById('scBody'), at = document.getElementById('scAt');
+  const open = document.getElementById('scOpen'), ref = document.getElementById('scRef');
+  const url = (p.scorecard && p.scorecard.url) || '';
+  const sp = sheetParts(url);
+  if(!sp){
+    body.innerHTML = `<div class="empty">${url ? 'That is not a Google Sheets link.' : 'No scorecard linked for '+esc(a.name)+' yet.'} Paste the sheet link in <a href="#" id="goSet">Settings</a>.</div>`;
+    open.style.display = ref.style.display = 'none';
+    document.getElementById('goSet').onclick = e=>{ e.preventDefault(); current = 'Settings'; render(); };
+    return;
+  }
+  open.href = url;
+  const draw = err=>{
+    const c = p.scoreCache, el = document.getElementById('scBody'); if(!el) return;
+    at.textContent = c ? 'Updated ' + new Date(c.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+    const errHtml = err ? `<div class="scerr">${esc(err)}${c ? ' Showing the last saved copy.' : ''}</div>` : '';
+    if(!c || !c.rows.length){ el.innerHTML = errHtml + (err ? '' : '<div class="empty">Loading the sheet...</div>'); return; }
+    el.innerHTML = errHtml + '<table class="sctable"><thead><tr>' + c.rows[0].map(x=>`<th>${esc(x)}</th>`).join('') + '</tr></thead><tbody>' +
+      c.rows.slice(1).map(r=>'<tr>'+r.map(x=>`<td>${esc(x)}</td>`).join('')+'</tr>').join('') + '</tbody></table>';
+  };
+  const pull = async ()=>{
+    ref.disabled = true; ref.textContent = 'Loading...';
+    try{
+      const rows = await fetchSheet(sp);
+      p.scoreCache = {at:Date.now(), rows};
+      await save('qc-meta', meta); draw('');
+    }catch(e){ draw(e.message); }
+    ref.disabled = false; ref.textContent = 'Refresh';
+  };
+  ref.onclick = pull;
+  draw('');
+  if(!p.scoreCache || Date.now()-p.scoreCache.at > 30*60*1000) pull();
+}
+
+// ---------- Settings ----------
+function renderSettings(sheet){
+  const ags = coachAgents();
+  const linked = ags.filter(g=>sheetParts((profOf(g).scorecard||{}).url)).length;
+  const stat = u => !u ? '<span class="snone">Not linked</span>' : sheetParts(u) ? '<span class="sok">✓ Linked</span>' : '<span class="sbad">Not a Sheets link</span>';
+  sheet.innerHTML = `<div class="settings"><div class="card"><div class="card-h">Monthly scorecards (Google Sheets)<span class="cnt">${linked} of ${ags.length} linked</span></div>
+    <div class="snote">Paste each agent's scorecard link. It shows up in Coaching &gt; Per Agent &gt; Scorecard. The sheet has to be shared as <b>"Anyone with the link can view"</b>. To use a specific tab of the sheet, open that tab first and copy the link from the address bar (it carries the tab id).</div>
+    ${ags.length ? `<table class="stbl"><thead><tr><th>Agent</th><th>Google Sheet link</th><th class="col-sst">Status</th><th class="col-act"></th></tr></thead><tbody>
+      ${ags.map(g=>{ const u = (profOf(g).scorecard||{}).url||''; return `<tr data-k="${esc(g.key)}"><td><span class="agn"><span class="avatar">${initials(g.name)}</span>${esc(g.name)}</span></td>
+        <td><input type="text" class="surl" placeholder="https://docs.google.com/spreadsheets/d/..." value="${esc(u)}"></td>
+        <td class="sst">${stat(u)}</td><td><button class="rmini" data-test ${sheetParts(u)?'':'disabled'}>Test</button></td></tr>`; }).join('')}</tbody></table>`
+      : '<div class="empty">No agents yet. Add one in Coaching &gt; Per Agent.</div>'}
+    <div class="sbulk"><label>Paste many at once, one per line: Name, then the link</label>
+      <textarea id="bulk" placeholder="Juan Dela Cruz   https://docs.google.com/spreadsheets/d/...&#10;Maria Santos   https://docs.google.com/spreadsheets/d/..."></textarea>
+      <div><button class="btn" id="bulkGo">Apply</button> <span class="hint" id="bulkMsg"></span></div></div>
+  </div></div>`;
+  sheet.querySelectorAll('tr[data-k]').forEach(tr=>{
+    const ag = ags.find(x=>x.key===tr.dataset.k), inp = tr.querySelector('.surl'), test = tr.querySelector('[data-test]');
+    inp.onchange = async ()=>{
+      const pr = profOf(ag), u = inp.value.trim();
+      if(u !== ((pr.scorecard||{}).url||'')) delete pr.scoreCache;
+      pr.scorecard = {url:u};
+      await save('qc-meta', meta);
+      tr.querySelector('.sst').innerHTML = stat(u); test.disabled = !sheetParts(u);
+    };
+    test.onclick = async ()=>{
+      const sp = sheetParts(inp.value.trim()); if(!sp) return;
+      test.textContent = '...';
+      try{ const rows = await fetchSheet(sp); toast('Pulled '+rows.length+' rows for '+ag.name); }
+      catch(e){ toast(e.message); }
+      test.textContent = 'Test';
+    };
+  });
+  document.getElementById('bulkGo').onclick = async ()=>{
+    let n = 0;
+    document.getElementById('bulk').value.split(/\r?\n/).forEach(line=>{
+      const i = line.search(/https?:\/\//); if(i<0) return;
+      const name = line.slice(0, i).replace(/[\s|,:\-]+$/, '').trim(), url = line.slice(i).trim().split(/\s+/)[0];
+      if(!name || !sheetParts(url)) return;
+      const k = keyOf(name);
+      const pr = meta.profiles[k] = meta.profiles[k] || {name};
+      if(((pr.scorecard||{}).url||'') !== url) delete pr.scoreCache;
+      pr.scorecard = {url}; n++;
+    });
+    await save('qc-meta', meta);
+    if(n) render(); else document.getElementById('bulkMsg').textContent = 'No lines matched. Use: Name  link';
+  };
+}
+
+(async function init(){
+  tasks = await load('qc-tasks', []);
+  archive = await load('qc-archive', []);
+  meta = await load('qc-meta', {lastRecurCheck:null});
+  meta.profiles = meta.profiles || {};
+  const added = await recurringCatchUp();
+  await archiveDone();
+  if(added) recurMsg = `Added ${added} recurring row${added===1?'':'s'} (Monthly Report on the 1st, Calibration every Friday).`;
+  render();
+})();
+</script>
+</body>
+</html>
